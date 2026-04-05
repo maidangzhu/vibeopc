@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UserProfile, DEFAULT_COMMANDS } from '@/lib/types';
+import { UserProfile } from '@/lib/types';
+import { TEMPLATES, applyTemplate, getTemplateById } from '@/lib/templates';
 import ProfileForm from '@/components/ProfileForm';
 import CommandForm from '@/components/CommandForm';
 import Terminal from '@/components/Terminal';
@@ -9,21 +10,22 @@ import Link from 'next/link';
 
 type Tab = 'profile' | 'commands';
 
-const DEFAULT_PROFILE: UserProfile = {
-  username: '',
-  name: '麦当',
-  bio: '全栈工程师 / AI 爱好者 / 独立开发者',
-  avatarUrl: '',
-  location: '杭州',
-  socialLinks: [
-    { platform: 'GitHub', url: 'https://github.com/maidang' },
-    { platform: 'Twitter', url: 'https://twitter.com/maidang' },
-  ],
-  commands: DEFAULT_COMMANDS,
-};
+const DEFAULT_TEMPLATE_ID = 'personal';
 
 export default function CreatePage() {
-  const [profile, setProfile] = useState<UserProfile>(DEFAULT_PROFILE);
+  const [profile, setProfile] = useState<UserProfile>({
+    username: '',
+    name: '麦当',
+    bio: '全栈工程师 / AI 爱好者 / 独立开发者',
+    avatarUrl: '',
+    location: '杭州',
+    socialLinks: [
+      { platform: 'GitHub', url: 'https://github.com/maidang' },
+      { platform: 'Twitter', url: 'https://twitter.com/maidang' },
+    ],
+    commands: [],
+    templateId: DEFAULT_TEMPLATE_ID,
+  });
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -32,7 +34,7 @@ export default function CreatePage() {
   const [previewCommand, setPreviewCommand] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Load profile on mount if username in URL
+  // Load profile on mount if username in URL, otherwise use template defaults
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const u = params.get('u');
@@ -50,15 +52,17 @@ export default function CreatePage() {
             bio: p.bio,
             avatarUrl: p.avatarUrl,
             location: p.location,
+            templateId: p.templateId || DEFAULT_TEMPLATE_ID,
             commands:
               p.commands.length > 0
-                ? p.commands.map((cmd: { id: string; name: string; description: string; content: string }) => ({
+                ? p.commands.map((cmd: { id: string; name: string; description: string; content: string; templateType?: string }) => ({
                     id: cmd.id,
                     name: cmd.name,
                     description: cmd.description,
                     content: cmd.content,
+                    templateType: ((cmd.templateType || 'free') as UserProfile['commands'][0]['templateType']),
                   }))
-                : DEFAULT_COMMANDS,
+                : applyTemplate(TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID) ?? TEMPLATES[0]),
             socialLinks: p.socialLinks.map((link: { platform: string; url: string }) => ({
               platform: link.platform,
               url: link.url,
@@ -67,8 +71,13 @@ export default function CreatePage() {
         })
         .catch(() => {
           // Profile not found, use defaults
-          setProfile((prev) => ({ ...prev, username: u }));
+          const tpl = TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID) ?? TEMPLATES[0];
+          setProfile((prev) => ({ ...prev, username: u, templateId: tpl.id, commands: applyTemplate(tpl) }));
         });
+    } else {
+      // No username in URL — use template defaults
+      const tpl = TEMPLATES.find((t) => t.id === DEFAULT_TEMPLATE_ID) ?? TEMPLATES[0];
+      setProfile((prev) => ({ ...prev, templateId: tpl.id, commands: applyTemplate(tpl) }));
     }
   }, []);
 
@@ -95,6 +104,15 @@ export default function CreatePage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleTemplateChange = (templateId: string) => {
+    const tpl = getTemplateById(templateId);
+    if (!tpl) return;
+    // Preserve content of commands that exist in both old and new template
+    const oldCmdMap = new Map(profile.commands.map((c) => [c.name, c.content]));
+    const newCommands = applyTemplate(tpl, Object.fromEntries(oldCmdMap));
+    setProfile((prev) => ({ ...prev, templateId, commands: newCommands }));
   };
 
   const handlePublish = async () => {
@@ -223,6 +241,39 @@ export default function CreatePage() {
               className="rounded-xl p-6"
               style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
             >
+              {/* Template selector — shown when on "profile" tab */}
+              {activeTab === 'profile' && (
+                <div className="mb-6">
+                  <label className="label text-xs mb-2 block">选择模板</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TEMPLATES.map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => handleTemplateChange(tpl.id)}
+                        className="p-3 rounded-xl border text-left transition-all"
+                        style={{
+                          background: profile.templateId === tpl.id ? 'rgba(217,120,87,0.12)' : 'rgba(255,255,255,0.03)',
+                          borderColor: profile.templateId === tpl.id ? 'rgba(217,120,87,0.4)' : 'rgba(255,255,255,0.07)',
+                        }}
+                      >
+                        <div
+                          className="text-sm font-medium mb-0.5"
+                          style={{ color: profile.templateId === tpl.id ? '#d97857' : '#e6edf3' }}
+                        >
+                          {tpl.name}
+                        </div>
+                        <div className="text-xs" style={{ color: '#8b949e' }}>
+                          {tpl.description}
+                        </div>
+                        <div className="text-xs mt-1" style={{ color: '#6e7681' }}>
+                          {tpl.commands.length} 个命令
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {activeTab === 'profile' ? (
                 <ProfileForm profile={profile} onChange={setProfile} />
               ) : (

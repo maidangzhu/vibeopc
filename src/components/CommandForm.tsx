@@ -1,6 +1,14 @@
 'use client';
 
-import { Command, UserProfile } from '@/lib/types';
+import { Command, UserProfile, TemplateType } from '@/lib/types';
+
+const TEMPLATE_TYPE_OPTIONS: { value: TemplateType; label: string; hint: string }[] = [
+  { value: 'free', label: '自由文本', hint: '原样输出，支持 emoji' },
+  { value: 'keyvalue', label: '键值对', hint: 'label: value 格式' },
+  { value: 'list', label: '列表', hint: '每行一个条目' },
+  { value: 'grouplist', label: '分组列表', hint: '多级分组，带标题' },
+  { value: 'markdown', label: 'Markdown', hint: '粗体、列表、标题' },
+];
 
 interface CommandFormProps {
   profile: UserProfile;
@@ -15,11 +23,18 @@ export default function CommandForm({ profile, onChange }: CommandFormProps) {
     onChange({ ...profile, commands });
   };
 
+  const updateTemplateType = (id: string, templateType: TemplateType) => {
+    const commands = profile.commands.map((cmd) =>
+      cmd.id === id ? { ...cmd, templateType } : cmd
+    );
+    onChange({ ...profile, commands });
+  };
+
   const addCommand = () => {
     const newId = Date.now().toString();
     onChange({
       ...profile,
-      commands: [...profile.commands, { id: newId, name: 'newcmd', description: '新命令', content: '' }],
+      commands: [...profile.commands, { id: newId, name: 'newcmd', description: '新命令', content: '', templateType: 'free' }],
     });
   };
 
@@ -136,7 +151,31 @@ export default function CommandForm({ profile, onChange }: CommandFormProps) {
                 rows={4}
                 className="input w-full px-3 py-2 text-sm resize-none"
               />
-              <p className="mt-1 text-xs" style={{ color: '#8b949e' }}>支持 emoji 和多行文本</p>
+            </div>
+
+            {/* Template type */}
+            <div>
+              <label className="label text-xs">渲染模式</label>
+              <div className="flex flex-wrap gap-2">
+                {TEMPLATE_TYPE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => updateTemplateType(cmd.id, opt.value)}
+                    title={opt.hint}
+                    className="px-3 py-1.5 text-xs rounded-lg border transition-colors"
+                    style={{
+                      background: cmd.templateType === opt.value ? 'rgba(217,120,87,0.15)' : 'rgba(255,255,255,0.03)',
+                      borderColor: cmd.templateType === opt.value ? 'rgba(217,120,87,0.4)' : 'rgba(255,255,255,0.08)',
+                      color: cmd.templateType === opt.value ? '#d97857' : '#8b949e',
+                    }}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1 text-xs" style={{ color: '#8b949e' }}>
+                {TEMPLATE_TYPE_OPTIONS.find((o) => o.value === cmd.templateType)?.hint}
+              </p>
             </div>
           </div>
         ))}

@@ -12,6 +12,23 @@ export async function checkPackageExists(packageName: string): Promise<boolean> 
   }
 }
 
+export async function getLatestVersion(packageName: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://registry.npmjs.org/${packageName}/latest`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    return (data as { version?: string }).version ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function incrementVersion(version: string): string {
+  const parts = version.split('.').map(Number);
+  parts[2] = (parts[2] || 0) + 1;
+  return parts.join('.');
+}
+
 async function runCommand(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string; code: number }> {
   return new Promise((resolve) => {
     exec(cmd, { cwd }, (error, stdout, stderr) => {

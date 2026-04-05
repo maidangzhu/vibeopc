@@ -4,7 +4,7 @@ import { prisma } from '@/lib/db';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, name, bio, location, avatarUrl, commands, socialLinks } = body;
+    const { username, name, bio, location, avatarUrl, commands, socialLinks, templateId } = body;
 
     if (!username || !name) {
       return NextResponse.json(
@@ -21,14 +21,17 @@ export async function POST(request: Request) {
     }
 
     // Upsert profile
+    const updateData: Record<string, unknown> = {
+      name,
+      bio: bio || '',
+      location: location || '',
+      avatarUrl: avatarUrl || '',
+    };
+    if (templateId) updateData.templateId = templateId;
+
     const profile = await prisma.profile.upsert({
       where: { username },
-      update: {
-        name,
-        bio: bio || '',
-        location: location || '',
-        avatarUrl: avatarUrl || '',
-      },
+      update: updateData,
       create: {
         username,
         name,
@@ -36,6 +39,7 @@ export async function POST(request: Request) {
         location: location || '',
         avatarUrl: avatarUrl || '',
         status: 'draft',
+        templateId: templateId || 'personal',
       },
     });
 
@@ -46,12 +50,13 @@ export async function POST(request: Request) {
     // Create commands
     if (commands && commands.length > 0) {
       await prisma.command.createMany({
-        data: commands.map((cmd: { name: string; description: string; content: string }, i: number) => ({
+        data: commands.map((cmd: { name: string; description: string; content: string; templateType?: string }, i: number) => ({
           profileId: profile.id,
           name: cmd.name,
           description: cmd.description || '',
           content: cmd.content || '',
           sortOrder: i,
+          templateType: cmd.templateType || 'free',
         })),
       });
     }

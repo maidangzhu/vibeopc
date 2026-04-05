@@ -1,15 +1,21 @@
 {
-  "name": "@vibeopc/maidang",
-  "version": "1.0.1",
-  "description": "麦当的 CLI 名片",
+  "name": "@vibeopc/vibeopc",
+  "version": "1.0.2",
+  "description": "麦当劳的 CLI 名片",
   "bin": {
-    "maidang": "./index.js"
+    "vibeopc": "./index.js"
   },
-  "files": ["index.js"],
+  "files": [
+    "index.js"
+  ],
   "engines": {
     "node": ">=16"
   },
-  "keywords": ["cli", "vibeopc", "business-card"],
+  "keywords": [
+    "cli",
+    "vibeopc",
+    "business-card"
+  ],
   "author": "maidang",
   "license": "MIT"
 }

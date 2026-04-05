@@ -1,10 +1,166 @@
-import { UserProfile } from './types';
+import { UserProfile, TemplateType } from './types';
 
-export function generatePackageJSON(profile: UserProfile): string {
+// ─── Content renderers ─────────────────────────────────────────
+
+/** free: 逐行原样输出 */
+function renderFree(lines: string[]): string {
+  return lines.map((l) => `log('${escape(l)}');`).join('\n');
+}
+
+/** keyvalue: 每行按 "label: value" 或 "label value" 解析并着色 */
+function renderKeyValue(lines: string[]): string {
+  return lines
+    .filter((l) => l.trim())
+    .map((l) => {
+      const colon = l.indexOf(':');
+      if (colon > 0) {
+        const k = l.slice(0, colon).trim();
+        const v = l.slice(colon + 1).trim();
+        return `log(gray + '${escape(k)}' + reset + white + ': ${escape(v)}' + reset);`;
+      }
+      // 没有冒号：整个居左显示
+      return `log(white + '${escape(l)}' + reset);`;
+    })
+    .join('\n') || `log(gray + '暂无内容' + reset);`;
+}
+
+/** list: 每行前面加 · 符号 */
+function renderList(lines: string[]): string {
+  return lines
+    .filter((l) => l.trim())
+    .map((l) => `log('  ' + green + '\\u2022 ' + reset + white + '${escape(l)}' + reset);`)
+    .join('\n') || `log(gray + '暂无内容' + reset);`;
+}
+
+/** grouplist: 检测 ## 标题行，其他行缩进 */
+function renderGroupList(lines: string[]): string {
+  return lines
+    .map((l) => {
+      const trimmed = l.trim();
+      if (trimmed.startsWith('## ') || trimmed.startsWith('**')) {
+        // Section header
+        const title = trimmed.replace(/^##\s*/, '').replace(/\*\*/g, '');
+        return `log();\nlog(bright + white + '${escape(title)}' + reset);`;
+      }
+      if (trimmed.startsWith('- ')) {
+        return `log('    ' + green + '\\u2022 ' + reset + white + '${escape(trimmed.slice(2))}' + reset);`;
+      }
+      if (trimmed) {
+        return `log(white + '  ${escape(l)}' + reset);`;
+      }
+      return '';
+    })
+    .filter(Boolean)
+    .join('\n') || `log(gray + '暂无内容' + reset);`;
+}
+
+/** markdown: 粗体 **text** 和列表 - item */
+function renderMarkdown(lines: string[]): string {
+  return lines
+    .map((l) => {
+      const trimmed = l.trim();
+      if (!trimmed) return `log();`;
+      if (trimmed.startsWith('**') && trimmed.endsWith('**')) {
+        return `log(bright + white + '${escape(trimmed.slice(2, -2))}' + reset);`;
+      }
+      if (trimmed.startsWith('- ')) {
+        return `log('  ' + green + '\\u2022 ' + reset + white + '${escape(trimmed.slice(2))}' + reset);`;
+      }
+      return `log(white + '${escape(l)}' + reset);`;
+    })
+    .join('\n') || `log(gray + '暂无内容' + reset);`;
+}
+
+function buildCase(templateType: TemplateType, cmdName: string, content: string): string {
+  const lines = content.split('\n');
+
+  let body: string;
+  switch (templateType) {
+    case 'keyvalue':
+      body = renderKeyValue(lines);
+      break;
+    case 'list':
+      body = renderList(lines);
+      break;
+    case 'grouplist':
+      body = renderGroupList(lines);
+      break;
+    case 'markdown':
+      body = renderMarkdown(lines);
+      break;
+    case 'free':
+    default:
+      body = renderFree(lines);
+  }
+
+  return [
+    `    case '${cmdName}':`,
+    `      log();`,
+    body,
+    `      log();`,
+    `      break;`,
+  ].join('\n');
+}
+
+// ─── whoami: special, reads profile fields ────────────────────
+
+function buildWhoamiCase(name: string, bio: string, location: string): string {
+  const location2 = location || '未知';
+  const bio2 = bio || '暂无简介';
+  return [
+    `    case 'whoami':`,
+    `      log();`,
+    `      divider();`,
+    `      log();`,
+    `      log(white + '姓名：${escape(name)}' + reset);`,
+    `      log(white + '位置：${escape(location2)}' + reset);`,
+    `      log(white + '简介：${escape(bio2)}' + reset);`,
+    `      log();`,
+    `      divider();`,
+    `      log();`,
+    `      log(green + '如果你想了解更多，欢迎联系！' + reset);`,
+    `      log();`,
+    `      break;`,
+  ].join('\n');
+}
+
+// ─── links: special, reads socialLinks ────────────────────────
+
+function buildLinksCase(socialLinks: { platform: string; url: string }[]): string {
+  if (socialLinks.length === 0) {
+    return [
+      `    case 'links':`,
+      `      log();`,
+      `      log(blue + '\\uD83D\\uDD17 链接' + reset);`,
+      `      log('  暂无链接');`,
+      `      log();`,
+      `      break;`,
+    ].join('\n');
+  }
+  const items = socialLinks
+    .map((l) => `      log(gray + '  ' + reset + white + '${escape(l.platform + ':')}' + reset + cyan + ' ${escape(l.url)}' + reset);`)
+    .join('\n');
+  return [
+    `    case 'links':`,
+    `      log();`,
+    `      log(blue + '\\uD83D\\uDD17 链接' + reset);`,
+    items,
+    `      log();`,
+    `      break;`,
+  ].join('\n');
+}
+
+// ─── Main generator ────────────────────────────────────────────
+
+function escape(s: string): string {
+  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+}
+
+export function generatePackageJSON(profile: UserProfile, version = '1.0.1'): string {
   return JSON.stringify(
     {
       name: `@vibeopc/${profile.username}`,
-      version: '1.0.1',
+      version,
       description: `${profile.name} 的 CLI 名片 - ${profile.bio}`,
       bin: {
         [profile.username]: './index.js',
@@ -19,96 +175,37 @@ export function generatePackageJSON(profile: UserProfile): string {
   );
 }
 
-function escape(s: string): string {
-  return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-}
-
-function lines(content: string): string {
-  // Return a JS string array expression with each line escaped
-  return content
-    .split('\n')
-    .map((line) => `'${escape(line)}'`)
-    .join(',\n    ');
-}
-
 export function generateIndex(profile: UserProfile): string {
   const { name, bio, location, commands, socialLinks } = profile;
 
-  // Build command switch cases
-  const cases = commands.map((cmd) => {
-    if (cmd.name === 'whoami') {
-      const location2 = location || '未知';
-      const bio2 = bio || '暂无简介';
-      return [
-        `    case '${cmd.name}':`,
-        `      log();`,
-        `      divider();`,
-        `      log();`,
-        `      log(white + '姓名：${escape(name)}' + reset);`,
-        `      log(white + '位置：${escape(location2)}' + reset);`,
-        `      log(white + '简介：${escape(bio2)}' + reset);`,
-        `      log();`,
-        `      divider();`,
-        `      log();`,
-        `      log(green + '如果你想了解更多，欢迎联系！' + reset);`,
-        `      log();`,
-        `      break;`,
-      ].join('\n');
-    }
-    if (cmd.name === 'skills' || cmd.name === 'projects') {
-      const content = cmd.content || (cmd.name === 'skills' ? '🛠 技术栈\n  暂无技能信息' : '📦 项目\n  暂无项目');
-      return [
-        `    case '${cmd.name}':`,
-        `      log();`,
-        `      log(${lines(content)});`,
-        `      log();`,
-        `      break;`,
-      ].join('\n');
-    }
-    if (cmd.name === 'links') {
-      if (socialLinks.length === 0 || !cmd.content) {
-        return [
-          `    case '${cmd.name}':`,
-          `      log();`,
-          `      log(blue + '🔗 链接' + reset);`,
-          `      log('  暂无链接');`,
-          `      log();`,
-          `      break;`,
-        ].join('\n');
+  // Build command cases
+  const cases = commands
+    .map((cmd) => {
+      if (cmd.name === 'whoami') {
+        return buildWhoamiCase(name, bio, location);
       }
-      return [
-        `    case '${cmd.name}':`,
-        `      log();`,
-        `      log(${lines(cmd.content)});`,
-        `      log();`,
-        `      break;`,
-      ].join('\n');
-    }
-    // Custom command
-    const content = cmd.content || '';
-    return [
-      `    case '${cmd.name}':`,
-      `      log();`,
-      `      log(${lines(content)});`,
-      `      log();`,
-      `      break;`,
-    ].join('\n');
-  }).join('\n');
+      if (cmd.name === 'links') {
+        return buildLinksCase(socialLinks);
+      }
+      return buildCase(cmd.templateType, cmd.name, cmd.content || '');
+    })
+    .join('\n');
 
-  // Menu items (main display)
-  const menu = commands.map((cmd) =>
-    `    log(green + '  ${escape(cmd.name)}'.padEnd(12) + reset + gray + '${escape(cmd.description)}' + reset);`
-  ).join('\n');
+  // Menu items
+  const menu = commands
+    .map(
+      (cmd) =>
+        `    log(green + '  ${escape(cmd.name)}'.padEnd(12) + reset + gray + '${escape(cmd.description)}' + reset);`
+    )
+    .join('\n');
 
   // Help items
-  const helpCmds = commands.map((cmd) =>
-    `  '${escape(cmd.name).padEnd(12)} ${escape(cmd.description)}'`
-  ).join(',\n    ');
-
-  // Links content for help
-  const linksContent = socialLinks.length > 0
-    ? socialLinks.map((l) => `  - ${l.platform}: ${l.url}`).join('\n')
-    : '暂无链接';
+  const helpCmds = commands
+    .map(
+      (cmd) =>
+        `  '${escape(cmd.name).padEnd(12)} ${escape(cmd.description)}'`
+    )
+    .join(',\n    ');
 
   return [
     `#!/usr/bin/env node`,
@@ -181,7 +278,7 @@ export function generateIndex(profile: UserProfile): string {
     `    log();`,
     `    divider();`,
     `    log();`,
-    `    log(gray + '❯ ' + reset);`,
+    `    log(gray + '\\u276F ' + reset);`,
     `    process.stdout.write(' '.repeat(2));`,
     `    return;`,
     `  }`,
@@ -200,9 +297,9 @@ export function generateIndex(profile: UserProfile): string {
   ].join('\n');
 }
 
-export function generatePackage(profile: UserProfile): Record<string, string> {
+export function generatePackage(profile: UserProfile, version?: string): Record<string, string> {
   return {
-    'package.json': generatePackageJSON(profile),
+    'package.json': generatePackageJSON(profile, version),
     'index.js': generateIndex(profile),
   };
 }

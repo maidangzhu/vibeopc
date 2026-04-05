@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generatePackage } from '@/lib/template';
-import { checkPackageExists, publishToNpm } from '@/lib/npm';
+import { checkPackageExists, publishToNpm, getLatestVersion, incrementVersion } from '@/lib/npm';
 import { UserProfile } from '@/lib/types';
 
 export async function POST(request: Request) {
@@ -28,18 +28,20 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Transform DB model to UserProfile for template
+    // Transform DB model to UserProfile for template
     const profile: UserProfile = {
       username: dbProfile.username,
       name: dbProfile.name,
       bio: dbProfile.bio,
       location: dbProfile.location,
       avatarUrl: dbProfile.avatarUrl,
+      templateId: dbProfile.templateId,
       commands: dbProfile.commands.map((cmd) => ({
         id: cmd.id,
         name: cmd.name,
         description: cmd.description,
         content: cmd.content,
+        templateType: (cmd.templateType as UserProfile['commands'][0]['templateType']) || 'free',
       })),
       socialLinks: dbProfile.socialLinks.map((link) => ({
         platform: link.platform,
@@ -47,8 +49,9 @@ export async function POST(request: Request) {
       })),
     };
 
-    // 3. Check if package already exists (only if not already published)
+    // 3. Check if package already exists
     const packageName = `@vibeopc/${username}`;
+    let version = '1.0.1';
     if (!dbProfile.npmPackage) {
       const exists = await checkPackageExists(packageName);
       if (exists) {
@@ -57,10 +60,16 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+    } else {
+      // Package already published — increment version to avoid conflict
+      const latest = await getLatestVersion(packageName);
+      if (latest) {
+        version = incrementVersion(latest);
+      }
     }
 
-    // 4. Generate package files
-    const files = generatePackage(profile);
+    // 4. Generate package files with correct version
+    const files = generatePackage(profile, version);
 
     // 5. Publish to npm
     const npmToken = process.env.NPM_PUBLISH_TOKEN;
@@ -86,6 +95,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       packageName,
+      version,
       command: `npx ${packageName}`,
     });
   } catch (error) {

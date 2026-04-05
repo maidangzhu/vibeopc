@@ -18,6 +18,7 @@ model Profile {
   location   String       @default("")
   npmPackage String?
   status     String       @default("draft")
+  templateId String       @default("personal")
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
   commands    Command[]
@@ -31,6 +32,7 @@ model Command {
   description String
   content     String  @default("")
   sortOrder   Int     @default(0)
+  templateType String @default("free")
   profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([profileId, name])
