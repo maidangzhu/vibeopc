@@ -1,0 +1,45 @@
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id         String       @id @default(cuid())
+  username   String       @unique
+  name       String
+  bio        String       @default("")
+  avatarUrl  String       @default("")
+  location   String       @default("")
+  npmPackage String?
+  status     String       @default("draft")
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  commands    Command[]
+  socialLinks SocialLink[]
+}
+
+model Command {
+  id          String  @id @default(cuid())
+  profileId    String
+  name        String
+  description String
+  content     String  @default("")
+  sortOrder   Int     @default(0)
+  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, name])
+}
+
+model SocialLink {
+  id        String  @id @default(cuid())
+  profileId String
+  platform  String
+  url       String
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
