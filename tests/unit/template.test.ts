@@ -22,7 +22,8 @@ describe('generatePackageJSON', () => {
     expect(pkg.name).toBe('@vibeopc/testuser');
     expect(pkg.version).toBe('1.0.1');
     expect(pkg.bin).toEqual({ testuser: './index.js' });
-    expect(pkg.files).toEqual(['index.js']);
+    expect(pkg.files).toEqual(['index.js', 'README.md']);
+    expect(pkg.readme).toEqual(''); // 直接调用时 readme 为空，通过 generatePackage 调用时会自动填充
     expect(pkg.engines).toEqual({ node: '>=16' });
     expect(pkg.author).toBe('测试用户');
     expect(pkg.license).toBe('MIT');
@@ -149,11 +150,22 @@ describe('generateIndex', () => {
     expect(index).toContain("command === '--version'");
   });
 
-  it('generatePackage 返回 package.json 和 index.js', () => {
+  it('generatePackage 返回 package.json、index.js 和 README.md', () => {
     const files = generatePackage(baseProfile);
     expect(Object.keys(files)).toContain('package.json');
     expect(Object.keys(files)).toContain('index.js');
+    expect(Object.keys(files)).toContain('README.md');
     expect(typeof files['package.json']).toBe('string');
     expect(typeof files['index.js']).toBe('string');
+    expect(typeof files['README.md']).toBe('string');
+  });
+
+  it('generatePackage 生成的 README 包含用户信息', () => {
+    const files = generatePackage(baseProfile);
+    const readme = files['README.md'];
+    expect(readme).toContain('测试用户');
+    expect(readme).toContain('@vibeopc/testuser');
+    expect(readme).toContain('GitHub');
+    expect(readme).toContain('VibeOPC');
   });
 });

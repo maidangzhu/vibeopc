@@ -156,16 +156,17 @@ function escape(s: string): string {
   return s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 }
 
-export function generatePackageJSON(profile: UserProfile, version = '1.0.1'): string {
+export function generatePackageJSON(profile: UserProfile, version = '1.0.1', readme = ''): string {
   return JSON.stringify(
     {
       name: `@vibeopc/${profile.username}`,
       version,
       description: `${profile.name} 的 CLI 名片 - ${profile.bio}`,
+      readme,
       bin: {
         [profile.username]: './index.js',
       },
-      files: ['index.js'],
+      files: ['index.js', 'README.md'],
       engines: { node: '>=16' },
       author: profile.name,
       license: 'MIT',
@@ -298,8 +299,58 @@ export function generateIndex(profile: UserProfile): string {
 }
 
 export function generatePackage(profile: UserProfile, version?: string): Record<string, string> {
+  const readme = generateREADME(profile);
   return {
-    'package.json': generatePackageJSON(profile, version),
+    'package.json': generatePackageJSON(profile, version, readme),
     'index.js': generateIndex(profile),
+    'README.md': readme,
   };
+}
+
+function generateREADME(profile: UserProfile): string {
+  const lines: string[] = [
+    `# ${profile.name}`,
+    '',
+    `${profile.bio || ''}`,
+    profile.location ? `📍 ${profile.location}` : '',
+    '',
+    '---',
+    '',
+    '## 一条命令，了解我',
+    '',
+    '```bash',
+    `npx @vibeopc/${profile.username}`,
+    '```',
+    '',
+    '## 可用命令',
+    '',
+  ];
+
+  for (const cmd of profile.commands) {
+    lines.push(`### \`${cmd.name}\` — ${cmd.description}`);
+    if (cmd.content && cmd.content.trim()) {
+      lines.push('');
+      lines.push('```');
+      lines.push(cmd.content.trim());
+      lines.push('```');
+    }
+    lines.push('');
+  }
+
+  if (profile.socialLinks.length > 0) {
+    lines.push('---');
+    lines.push('');
+    lines.push('## 链接');
+    lines.push('');
+    for (const link of profile.socialLinks) {
+      lines.push(`- [${link.platform}](${link.url})`);
+    }
+    lines.push('');
+  }
+
+  lines.push('---');
+  lines.push('');
+  lines.push(`> 由 [VibeOPC](https://vibeopc.app) 生成 · ${new Date().getFullYear()}`);
+
+  return lines.join('\n').replace(/\n{3,}/g, '\n\n');
 }

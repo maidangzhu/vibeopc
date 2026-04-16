@@ -14,6 +14,7 @@ module.exports = {
   },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@vercel/sandbox$': '<rootDir>/__mocks__/@vercel/sandbox.ts',
   },
   testTimeout: 60000,
 };
