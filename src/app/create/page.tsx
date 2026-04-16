@@ -103,6 +103,7 @@ export default function CreatePage() {
   const [publishStep, setPublishStep] = useState<'idle' | 'saving' | 'publishing' | 'done' | 'error'>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishedPkg, setPublishedPkg] = useState<string | null>(null);
+  const [npmUrl, setNpmUrl] = useState<string | null>(null);
   const [previewCommand, setPreviewCommand] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -191,6 +192,7 @@ export default function CreatePage() {
       }
       const pubData = await pubRes.json();
       setPublishedPkg(pubData.packageName || `@vibeopc/${profile.username}`);
+      setNpmUrl(pubData.npmUrl || `https://www.npmjs.com/package/@vibeopc/${profile.username}`);
       setPublishStep('done');
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : '发布失败，请稍后重试');
@@ -236,7 +238,7 @@ export default function CreatePage() {
               </code>
             </div>
 
-            <div className="flex gap-3 justify-center">
+            <div className="flex gap-3 justify-center items-center">
               <button onClick={copyCommand} className="btn btn-primary px-5 py-2.5 text-sm font-medium">
                 {copied ? (
                   <>
@@ -250,6 +252,17 @@ export default function CreatePage() {
                   </>
                 )}
               </button>
+              <a
+                href={npmUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn btn-ghost px-5 py-2.5 text-sm"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" /><polyline points="15 3 21 3 21 9" /><line x1="10" y1="14" x2="21" y2="3" />
+                </svg>
+                查看 npm
+              </a>
               <Link href="/" className="btn btn-ghost px-5 py-2.5 text-sm">
                 返回首页
               </Link>

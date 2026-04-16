@@ -97,6 +97,7 @@ export async function POST(request: Request) {
       packageName,
       version,
       command: `npx ${packageName}`,
+      npmUrl: `https://www.npmjs.com/package/${packageName}`,
     });
   } catch (error) {
     console.error('Publish error:', error);
