@@ -1,7 +1,4 @@
-import { exec } from 'child_process';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
+import { Sandbox } from '@vercel/sandbox';
 
 export async function checkPackageExists(packageName: string): Promise<boolean> {
   try {
@@ -16,8 +13,8 @@ export async function getLatestVersion(packageName: string): Promise<string | nu
   try {
     const res = await fetch(`https://registry.npmjs.org/${packageName}/latest`);
     if (!res.ok) return null;
-    const data = await res.json();
-    return (data as { version?: string }).version ?? null;
+    const data = (await res.json()) as { version?: string };
+    return data.version ?? null;
   } catch {
     return null;
   }
@@ -29,14 +26,6 @@ export function incrementVersion(version: string): string {
   return parts.join('.');
 }
 
-async function runCommand(cmd: string, cwd: string): Promise<{ stdout: string; stderr: string; code: number }> {
-  return new Promise((resolve) => {
-    exec(cmd, { cwd }, (error, stdout, stderr) => {
-      resolve({ stdout: stdout || '', stderr: stderr || '', code: error?.code || 0 });
-    });
-  });
-}
-
 export async function publishToNpm(
   files: Record<string, string>,
   options: {
@@ -46,47 +35,59 @@ export async function publishToNpm(
 ): Promise<{ success: boolean; message: string }> {
   const { packageName, authToken } = options;
 
+  let sandbox: Awaited<ReturnType<typeof Sandbox.create>> | null = null;
+
   try {
-    // Create temporary directory
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-publish-'));
-    const pkgDir = path.join(tmpDir, 'pkg');
-    fs.mkdirSync(pkgDir, { recursive: true });
+    // Start an ephemeral sandbox VM
+    sandbox = await Sandbox.create({
+      runtime: 'node24',
+      timeout: 5 * 60 * 1000, // 5 minutes
+      env: {
+        NPM_PUBLISH_TOKEN: authToken,
+      },
+    });
 
-    // Write all files
-    for (const [filePath, content] of Object.entries(files)) {
-      const fullPath = path.join(pkgDir, filePath);
-      const dir = path.dirname(fullPath);
-      fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(fullPath, content);
-    }
+    // Write all files to the sandbox
+    await sandbox.writeFiles([
+      ...Object.entries(files).map(([filePath, content]) => ({
+        path: `/vercel/sandbox/${filePath}`,
+        content,
+      })),
+      // Write .npmrc with auth token
+      {
+        path: '/vercel/sandbox/.npmrc',
+        content: `//registry.npmjs.org/:_authToken=${authToken}\nregistry=https://registry.npmjs.org/\n`,
+      },
+    ]);
 
-    // Create .npmrc with auth - matches what works when running npm from /tmp
-    fs.writeFileSync(
-      path.join(pkgDir, '.npmrc'),
-      `//registry.npmjs.org/:_authToken=${authToken}\nregistry=https://registry.npmjs.org/\n`
-    );
+    // Run npm publish inside the sandbox
+    const result = await sandbox.runCommand({
+      cmd: 'npm',
+      args: ['publish', '--access', 'public'],
+      cwd: '/vercel/sandbox',
+    });
 
-    // Run npm publish
-    const { stdout, stderr, code } = await runCommand(
-      `npm publish --access public --registry https://registry.npmjs.org`,
-      pkgDir
-    );
+    const stdout = await result.stdout();
+    const stderr = await result.stderr();
 
-    // Cleanup
-    fs.rmSync(tmpDir, { recursive: true, force: true });
-
-    if (code !== 0) {
-      return { success: false, message: (stderr || stdout).trim() };
+    if (result.exitCode !== 0) {
+      return { success: false, message: (stderr || stdout || 'npm publish failed').trim() };
     }
 
     return {
       success: true,
-      message: stdout.includes('+') ? stdout.trim() : `Package ${packageName} published successfully`,
+      message: stdout.includes('+')
+        ? stdout.trim()
+        : `Package ${packageName} published successfully`,
     };
   } catch (error) {
     return {
       success: false,
       message: error instanceof Error ? error.message : '发布失败',
     };
+  } finally {
+    if (sandbox) {
+      await sandbox.stop();
+    }
   }
 }
