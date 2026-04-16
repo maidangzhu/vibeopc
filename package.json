@@ -13,6 +13,8 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.6.0",
     "@prisma/client": "^7.6.0",
+    "@vercel/sandbox": "^1.10.0",
+    "@vibeopc/asdfasfasdfasfd": "^1.0.1",
     "dotenv": "^17.4.0",
     "next": "16.2.2",
     "pg": "^8.20.0",
