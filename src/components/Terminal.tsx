@@ -4,9 +4,7 @@ import { UserProfile } from '@/lib/types';
 
 interface TerminalProps {
   profile: UserProfile;
-  /** command name to show output for, null = show main menu */
   showCommandOutput?: string | null;
-  /** Called when user clicks the eye icon to preview a command */
   onPreviewCommand?: (cmdName: string | null) => void;
   className?: string;
 }
@@ -15,22 +13,13 @@ function getCommandOutput(profile: UserProfile, commandName: string): string {
   const cmd = profile.commands.find((c) => c.name === commandName);
   if (!cmd) return '命令不存在';
 
-  if (cmd.content && cmd.content.trim()) {
-    return cmd.content;
-  }
+  if (cmd.content && cmd.content.trim()) return cmd.content;
 
-  // Default content when not configured
   switch (commandName) {
     case 'whoami':
-      return `姓名：${profile.name}
-位置：${profile.location || '未知'}
-简介：${profile.bio || '暂无简介'}
-
-如果你想了解更多，欢迎联系！`;
-    case 'skills':
-      return '暂无技能信息';
-    case 'projects':
-      return '暂无项目';
+      return `姓名：${profile.name}\n位置：${profile.location || '未知'}\n简介：${profile.bio || '暂无简介'}\n\n如果你想了解更多，欢迎联系！`;
+    case 'skills': return '暂无技能信息';
+    case 'projects': return '暂无项目';
     case 'links':
       if (profile.socialLinks.length === 0) return '暂无链接';
       return profile.socialLinks.map((l) => `  - ${l.platform}: ${l.url}`).join('\n');
@@ -49,136 +38,131 @@ export default function Terminal({
 
   return (
     <div
-      className={`rounded-2xl overflow-hidden shadow-2xl border border-white/10 ${className}`}
-      style={{ background: '#0d1117' }}
+      className={`rounded-2xl overflow-hidden border border-white/8 ${className}`}
+      style={{ background: 'var(--t-bg)', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}
     >
       {/* Title bar */}
       <div
-        className="flex items-center gap-2 px-4 py-3 border-b"
-        style={{ background: '#161b22', borderColor: 'rgba(255,255,255,0.05)' }}
+        className="flex items-center gap-2 px-4 py-3"
+        style={{ background: 'var(--t-titlebar)', borderBottom: '1px solid var(--t-border)' }}
       >
         <div className="flex gap-2">
           <div className="w-3 h-3 rounded-full" style={{ background: '#ff5f57' }} />
           <div className="w-3 h-3 rounded-full" style={{ background: '#febc2e' }} />
           <div className="w-3 h-3 rounded-full" style={{ background: '#28c840' }} />
         </div>
-        <div className="flex-1 text-center text-xs" style={{ color: '#8b949e' }}>
+        <div className="flex-1 text-center text-xs" style={{ color: 'var(--t-gray)' }}>
           {packageName} — bash
         </div>
       </div>
 
-      {/* Terminal content */}
+      {/* Content */}
       <div
-        className="p-6 min-h-[340px] max-h-[480px] overflow-y-auto"
-        style={{ fontFamily: 'var(--font-mono)' }}
+        className="p-6 min-h-[360px] max-h-[500px] overflow-y-auto"
+        style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}
       >
-        {/* Command prompt header */}
-        <div className="mb-4">
-          <div className="text-xs mb-2" style={{ color: '#8b949e' }}>
-            Last login:{' '}
-            {new Date().toLocaleDateString('zh-CN', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-            })}{' '}
-            on ttys000
-          </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span style={{ color: '#c9d1d9' }}>➜</span>
-            <span style={{ color: '#56d364', fontWeight: 500 }}>
-              {packageName.split('/')[1]}
-            </span>
-            <span style={{ color: '#8b949e' }}>~</span>
-            <span style={{ color: '#c9d1d9' }}>
-              npx {packageName}
-              {showCommandOutput ? ` ${showCommandOutput}` : ''}
-            </span>
-          </div>
+        {/* Last login */}
+        <div className="text-xs mb-4" style={{ color: 'var(--t-gray)' }}>
+          Last login:{' '}
+          {new Date().toLocaleDateString('zh-CN', {
+            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
+          })} on ttys000
+        </div>
+
+        {/* Command prompt line */}
+        <div className="flex items-center gap-2 mb-5 text-sm">
+          <span style={{ color: '#c9d1d9' }}>➜</span>
+          <span style={{ color: 'var(--t-green)', fontWeight: 600 }}>{packageName.split('/')[1]}</span>
+          <span style={{ color: 'var(--t-gray)' }}>~</span>
+          <span style={{ color: '#c9d1d9' }}>
+            npx {packageName}{showCommandOutput ? ` ${showCommandOutput}` : ''}
+          </span>
         </div>
 
         {showCommandOutput ? (
-          // Command output view
-          <div className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#c9d1d9' }}>
-            <div className="mb-3 flex items-center gap-2" style={{ color: '#58a6ff' }}>
+          // ── Command output view ──────────────────────────────
+          <div className="whitespace-pre-wrap leading-relaxed" style={{ color: 'var(--t-text)' }}>
+            <div className="flex items-center gap-2 mb-3" style={{ color: 'var(--t-blue)' }}>
               <span>❯</span>
               <span>{showCommandOutput}</span>
               {onPreviewCommand && (
                 <button
                   onClick={() => onPreviewCommand(null)}
-                  className="ml-2 text-xs px-2 py-0.5 rounded border transition-colors"
+                  className="ml-3 px-2.5 py-0.5 text-xs rounded-lg border transition-all"
                   style={{
-                    color: '#8b949e',
+                    color: 'var(--t-gray)',
                     borderColor: 'rgba(255,255,255,0.1)',
+                    background: 'transparent',
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                    e.currentTarget.style.color = '#c9d1d9';
+                    (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.05)';
+                    (e.currentTarget as HTMLButtonElement).style.color = '#c9d1d9';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'transparent';
-                    e.currentTarget.style.color = '#8b949e';
+                    (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+                    (e.currentTarget as HTMLButtonElement).style.color = 'var(--t-gray)';
                   }}
                 >
-                  ← 返回菜单
+                  ← 主菜单
                 </button>
               )}
             </div>
             {getCommandOutput(profile, showCommandOutput)}
-            <div className="mt-4" style={{ color: '#8b949e' }}>
-              按 Ctrl+C 退出
+            <div className="mt-5 flex items-center gap-1" style={{ color: 'var(--t-gray)' }}>
+              <span>❯</span>
+              <span className="inline-block w-2 h-3 animate-blink" style={{ background: 'var(--t-text)' }} />
             </div>
           </div>
         ) : (
-          // Main menu view
+          // ── Main menu view ───────────────────────────────────
           <>
             <div className="mb-5">
-              <div className="text-lg font-semibold mb-1" style={{ color: '#c9d1d9' }}>
+              <div className="text-base font-semibold mb-1" style={{ color: 'var(--t-text)' }}>
                 我是 {profile.name || '你的名字'}
               </div>
-              <div className="text-sm" style={{ color: '#8b949e' }}>
+              <div className="text-sm" style={{ color: 'var(--t-gray)' }}>
                 {profile.bio || '你的简介'}
-                {profile.location && <span className="ml-2">· {profile.location}</span>}
+                {profile.location && (
+                  <span className="ml-2" style={{ color: 'var(--t-gray)' }}>· {profile.location}</span>
+                )}
               </div>
             </div>
 
-            <div className="mb-5" style={{ borderTop: '1px solid #30363d' }} />
+            <div className="mb-5" style={{ borderTop: '1px solid var(--t-divider)' }} />
 
-            {/* Command menu */}
+            {/* Command list */}
             <div className="space-y-1 mb-5">
               {profile.commands.map((cmd) => (
-                <div key={cmd.id} className="flex items-center gap-3 text-sm group">
+                <div
+                  key={cmd.id}
+                  className="group flex items-center gap-4 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
+                  style={{ color: 'var(--t-text)' }}
+                  onClick={() => onPreviewCommand && onPreviewCommand(cmd.name)}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
                   <span
-                    className="font-medium min-w-[90px] cursor-pointer hover:underline"
-                    style={{ color: '#56d364' }}
-                    onClick={() => onPreviewCommand && onPreviewCommand(cmd.name)}
-                    title="点击预览"
+                    className="font-medium min-w-[88px]"
+                    style={{ color: 'var(--t-green)' }}
                   >
                     {cmd.name}
                   </span>
-                  <span className="text-xs" style={{ color: '#8b949e' }}>
+                  <span className="text-sm" style={{ color: 'var(--t-gray)' }}>
                     {cmd.description}
                   </span>
-                  {onPreviewCommand && (
-                    <button
-                      onClick={() => onPreviewCommand(cmd.name)}
-                      className="ml-auto text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-                      style={{ color: '#8b949e' }}
-                      title="预览"
-                    >
-                      👁
-                    </button>
-                  )}
+                  <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-xs" style={{ color: 'var(--t-gray)' }}>
+                    ↗
+                  </span>
                 </div>
               ))}
             </div>
 
-            <div className="mb-5" style={{ borderTop: '1px solid #30363d' }} />
+            <div className="mb-5" style={{ borderTop: '1px solid var(--t-divider)' }} />
 
-            {/* Blinking cursor */}
-            <div className="flex items-center gap-1">
-              <span style={{ color: '#58a6ff' }}>❯</span>
-              <span className="inline-block w-2 h-4 animate-blink" style={{ background: '#c9d1d9' }} />
+            {/* Help hint */}
+            <div className="flex items-center gap-2" style={{ color: 'var(--t-gray)' }}>
+              <span>❯</span>
+              <span className="text-sm">输入命令查看详情，如 npx {packageName} whoami</span>
             </div>
           </>
         )}

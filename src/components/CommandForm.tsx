@@ -1,14 +1,6 @@
 'use client';
 
-import { Command, UserProfile, TemplateType } from '@/lib/types';
-
-const TEMPLATE_TYPE_OPTIONS: { value: TemplateType; label: string; hint: string }[] = [
-  { value: 'free', label: '自由文本', hint: '原样输出，支持 emoji' },
-  { value: 'keyvalue', label: '键值对', hint: 'label: value 格式' },
-  { value: 'list', label: '列表', hint: '每行一个条目' },
-  { value: 'grouplist', label: '分组列表', hint: '多级分组，带标题' },
-  { value: 'markdown', label: 'Markdown', hint: '粗体、列表、标题' },
-];
+import { UserProfile } from '@/lib/types';
 
 interface CommandFormProps {
   profile: UserProfile;
@@ -16,26 +8,13 @@ interface CommandFormProps {
 }
 
 export default function CommandForm({ profile, onChange }: CommandFormProps) {
-  const updateCommand = (id: string, field: keyof Command, value: string) => {
+  const updateCommand = (id: string, field: 'description' | 'content', value: string) => {
     const commands = profile.commands.map((cmd) =>
-      cmd.id === id ? { ...cmd, [field]: field === 'name' ? value.toLowerCase().replace(/[^a-z0-9-]/g, '') : value } : cmd
+      cmd.id === id
+        ? { ...cmd, [field]: field === 'description' ? value : value }
+        : cmd
     );
     onChange({ ...profile, commands });
-  };
-
-  const updateTemplateType = (id: string, templateType: TemplateType) => {
-    const commands = profile.commands.map((cmd) =>
-      cmd.id === id ? { ...cmd, templateType } : cmd
-    );
-    onChange({ ...profile, commands });
-  };
-
-  const addCommand = () => {
-    const newId = Date.now().toString();
-    onChange({
-      ...profile,
-      commands: [...profile.commands, { id: newId, name: 'newcmd', description: '新命令', content: '', templateType: 'free' }],
-    });
   };
 
   const removeCommand = (id: string) => {
@@ -51,131 +30,100 @@ export default function CommandForm({ profile, onChange }: CommandFormProps) {
     onChange({ ...profile, commands });
   };
 
-  return (
-    <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-base font-semibold">命令配置</h2>
-        <button
-          onClick={addCommand}
-          className="px-3 py-1.5 text-sm rounded-lg transition-colors"
-          style={{ color: '#d97857', border: '1px solid rgba(217,120,87,0.3)' }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(217,120,87,0.1)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-        >
-          + 添加命令
-        </button>
-      </div>
+  // Built-in commands are protected from deletion
+  const isProtected = (name: string) => ['whoami', 'links'].includes(name);
 
-      <p className="text-xs" style={{ color: '#8b949e' }}>
-        每个命令对应终端中的一项菜单，点击后可显示详细内容
-      </p>
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+          点击命令名称可直接预览效果
+        </p>
+      </div>
 
       <div className="space-y-3">
         {profile.commands.map((cmd, index) => (
           <div
             key={cmd.id}
-            className="p-4 rounded-xl space-y-3"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}
+            className="rounded-xl p-4 space-y-3"
+            style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
           >
+            {/* Header row */}
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium" style={{ color: '#8b949e' }}>
-                命令 #{index + 1}
-              </span>
+              <div className="flex items-center gap-2">
+                <code
+                  className="text-xs px-2 py-0.5 rounded-md font-mono"
+                  style={{ background: 'rgba(86,211,100,0.08)', color: 'var(--t-green)' }}
+                >
+                  {cmd.name}
+                </code>
+                {isProtected(cmd.name) && (
+                  <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>内置</span>
+                )}
+              </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => moveCommand(index, 'up')}
                   disabled={index === 0}
-                  className="px-2 py-1 text-xs rounded transition-colors disabled:opacity-20"
-                  style={{ color: '#8b949e' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  className="btn-icon !w-7 !h-7 !text-xs disabled:opacity-20"
+                  title="上移"
                 >
                   ↑
                 </button>
                 <button
                   onClick={() => moveCommand(index, 'down')}
                   disabled={index === profile.commands.length - 1}
-                  className="px-2 py-1 text-xs rounded transition-colors disabled:opacity-20"
-                  style={{ color: '#8b949e' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  className="btn-icon !w-7 !h-7 !text-xs disabled:opacity-20"
+                  title="下移"
                 >
                   ↓
                 </button>
-                <button
-                  onClick={() => removeCommand(cmd.id)}
-                  disabled={profile.commands.length <= 1}
-                  className="px-2 py-1 text-xs rounded transition-colors disabled:opacity-20"
-                  style={{ color: '#d97857' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(217,120,87,0.1)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  删除
-                </button>
+                {!isProtected(cmd.name) && (
+                  <button
+                    onClick={() => removeCommand(cmd.id)}
+                    className="btn-icon !w-7 !h-7"
+                    style={{ color: 'var(--t-red)' }}
+                    title="删除"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6" /><path d="M14 11v6" />
+                    </svg>
+                  </button>
+                )}
               </div>
-            </div>
-
-            {/* Command name */}
-            <div>
-              <label className="label text-xs">命令名</label>
-              <input
-                type="text"
-                value={cmd.name}
-                onChange={(e) => updateCommand(cmd.id, 'name', e.target.value)}
-                placeholder="whoami"
-                className="input w-full px-3 py-2 text-sm"
-                style={{ fontFamily: 'var(--font-mono)' }}
-              />
             </div>
 
             {/* Description */}
             <div>
-              <label className="label text-xs">菜单描述</label>
+              <label className="label text-xs">菜单显示文字</label>
               <input
                 type="text"
                 value={cmd.description}
                 onChange={(e) => updateCommand(cmd.id, 'description', e.target.value)}
                 placeholder="关于我"
-                className="input w-full px-3 py-2 text-sm"
+                className="input px-3 py-2 text-sm"
               />
-              <p className="mt-1 text-xs" style={{ color: '#8b949e' }}>终端菜单中显示的文字</p>
             </div>
 
             {/* Content */}
             <div>
-              <label className="label text-xs">命令内容</label>
+              <label className="label text-xs">
+                {cmd.name === 'whoami' ? '固定内容（whoami 自动读取个人信息）' :
+                 cmd.name === 'links' ? '固定内容（links 自动读取社交链接）' : '命令内容'}
+              </label>
               <textarea
                 value={cmd.content}
                 onChange={(e) => updateCommand(cmd.id, 'content', e.target.value)}
-                placeholder="输入命令执行后显示的内容..."
+                placeholder={
+                  cmd.name === 'whoami' ? '此项内容自动从上方个人信息填充，无需填写' :
+                  cmd.name === 'links' ? '此项内容自动从社交链接填充，无需填写' :
+                  '输入命令执行后显示的内容...'
+                }
                 rows={4}
-                className="input w-full px-3 py-2 text-sm resize-none"
+                className="input px-3 py-2 text-sm resize-none"
+                readOnly={['whoami', 'links'].includes(cmd.name)}
+                style={['whoami', 'links'].includes(cmd.name) ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               />
-            </div>
-
-            {/* Template type */}
-            <div>
-              <label className="label text-xs">渲染模式</label>
-              <div className="flex flex-wrap gap-2">
-                {TEMPLATE_TYPE_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.value}
-                    onClick={() => updateTemplateType(cmd.id, opt.value)}
-                    title={opt.hint}
-                    className="px-3 py-1.5 text-xs rounded-lg border transition-colors"
-                    style={{
-                      background: cmd.templateType === opt.value ? 'rgba(217,120,87,0.15)' : 'rgba(255,255,255,0.03)',
-                      borderColor: cmd.templateType === opt.value ? 'rgba(217,120,87,0.4)' : 'rgba(255,255,255,0.08)',
-                      color: cmd.templateType === opt.value ? '#d97857' : '#8b949e',
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-1 text-xs" style={{ color: '#8b949e' }}>
-                {TEMPLATE_TYPE_OPTIONS.find((o) => o.value === cmd.templateType)?.hint}
-              </p>
             </div>
           </div>
         ))}
