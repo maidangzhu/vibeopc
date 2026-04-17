@@ -86,3 +86,12 @@ export const SOCIAL_PLATFORMS = [
   { value: 'juejin', label: '掘金' },
   { value: 'website', label: '个人网站' },
 ];
+
+export function getSocialPlatformLabel(platform: string): string {
+  const normalized = platform.trim().toLowerCase();
+  const matched = SOCIAL_PLATFORMS.find(
+    (item) => item.value === normalized || item.label.toLowerCase() === normalized
+  );
+
+  return matched?.label || platform;
+}

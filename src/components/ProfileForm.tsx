@@ -1,13 +1,74 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { UserProfile, SOCIAL_PLATFORMS } from '@/lib/types';
+
+type UsernameStatus = 'idle' | 'checking' | 'available' | 'taken' | 'error';
 
 interface ProfileFormProps {
   profile: UserProfile;
   onChange: (profile: UserProfile) => void;
+  /** 初始用户名（来自 URL params），自己的用户名不触发冲突警告 */
+  initialUsername?: string;
+  onUsernameTakenChange?: (taken: boolean) => void;
 }
 
-export default function ProfileForm({ profile, onChange }: ProfileFormProps) {
+export default function ProfileForm({
+  profile,
+  onChange,
+  initialUsername,
+  onUsernameTakenChange,
+}: ProfileFormProps) {
+  const [availability, setAvailability] = useState<{
+    username: string;
+    status: Exclude<UsernameStatus, 'checking'>;
+  }>({
+    username: '',
+    status: 'idle',
+  });
+  const checkTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const trimmedUsername = profile.username.trim();
+  const shouldCheckUsername =
+    Boolean(trimmedUsername) &&
+    trimmedUsername !== initialUsername &&
+    /^[a-z0-9_-]+$/.test(trimmedUsername);
+
+  const usernameStatus: UsernameStatus = (() => {
+    if (!shouldCheckUsername) return 'idle';
+    if (availability.username !== trimmedUsername) return 'checking';
+    return availability.status;
+  })();
+
+  // Debounced username availability check
+  useEffect(() => {
+    if (!shouldCheckUsername) {
+      onUsernameTakenChange?.(false);
+      return;
+    }
+    if (checkTimer.current) clearTimeout(checkTimer.current);
+
+    const currentUsername = trimmedUsername;
+    checkTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/profile/${currentUsername}`);
+        if (res.ok) {
+          setAvailability({ username: currentUsername, status: 'taken' });
+          onUsernameTakenChange?.(true);
+        } else {
+          setAvailability({ username: currentUsername, status: 'available' });
+          onUsernameTakenChange?.(false);
+        }
+      } catch {
+        setAvailability({ username: currentUsername, status: 'error' });
+        onUsernameTakenChange?.(false);
+      }
+    }, 400);
+
+    return () => {
+      if (checkTimer.current) clearTimeout(checkTimer.current);
+    };
+  }, [trimmedUsername, shouldCheckUsername, onUsernameTakenChange]);
+
   const update = (field: keyof UserProfile, value: string) => {
     onChange({ ...profile, [field]: value });
   };
@@ -19,7 +80,7 @@ export default function ProfileForm({ profile, onChange }: ProfileFormProps) {
   };
 
   const addSocialLink = () => {
-    onChange({ ...profile, socialLinks: [...profile.socialLinks, { platform: 'GitHub', url: '' }] });
+    onChange({ ...profile, socialLinks: [...profile.socialLinks, { platform: 'github', url: '' }] });
   };
 
   const removeSocialLink = (index: number) => {
@@ -51,9 +112,35 @@ export default function ProfileForm({ profile, onChange }: ProfileFormProps) {
             autoComplete="off"
             spellCheck={false}
           />
+          {/* Availability indicator */}
+          {usernameStatus === 'checking' && (
+            <span className="pr-3 flex-shrink-0">
+              <span className="spinner" style={{ width: 14, height: 14 }} />
+            </span>
+          )}
+          {usernameStatus === 'available' && (
+            <span className="pr-3 flex-shrink-0" title="用户名可用" style={{ color: 'var(--t-green)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </span>
+          )}
+          {usernameStatus === 'taken' && (
+            <span className="pr-3 flex-shrink-0" title="用户名已被占用" style={{ color: 'var(--t-red)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </span>
+          )}
         </div>
         <p className="mt-2 text-xs" style={{ color: 'var(--text-subtle)' }}>
-          你的命令：<span className="font-mono" style={{ color: 'var(--t-green)' }}>npx @vibeopc/{profile.username || 'yourname'}</span>
+          {usernameStatus === 'taken' ? (
+            <span style={{ color: 'var(--t-red)' }}>用户名已被占用，请换一个</span>
+          ) : usernameStatus === 'available' ? (
+            <>你的命令：<span className="font-mono" style={{ color: 'var(--t-green)' }}>npx @vibeopc/{profile.username}</span></>
+          ) : (
+            <>你的命令：<span className="font-mono" style={{ color: 'var(--t-green)' }}>npx @vibeopc/{profile.username || 'yourname'}</span></>
+          )}
         </p>
       </div>
 
@@ -92,29 +179,6 @@ export default function ProfileForm({ profile, onChange }: ProfileFormProps) {
           placeholder="杭州"
           className="input px-3.5 py-2.5 text-sm"
         />
-      </div>
-
-      {/* Avatar URL */}
-      <div>
-        <label className="label">头像 URL</label>
-        <input
-          type="url"
-          value={profile.avatarUrl}
-          onChange={(e) => update('avatarUrl', e.target.value)}
-          placeholder="https://example.com/avatar.jpg"
-          className="input px-3.5 py-2.5 text-sm"
-        />
-        {profile.avatarUrl && (
-          <div className="mt-2">
-            <img
-              src={profile.avatarUrl}
-              alt="头像预览"
-              className="w-12 h-12 rounded-full object-cover"
-              style={{ border: '2px solid var(--border)' }}
-              onError={(e) => (e.currentTarget.style.display = 'none')}
-            />
-          </div>
-        )}
       </div>
 
       {/* Divider */}

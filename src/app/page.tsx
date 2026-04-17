@@ -1,8 +1,60 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import Terminal from '@/components/Terminal';
-import { DEFAULT_COMMANDS } from '@/lib/types';
+
+/** 视频演示 URL，提供后修改此处即可 */
+const HOME_VIDEO_URL = '';
+
+// Placeholder shown when no video URL is configured
+function VideoPlaceholder() {
+  return (
+    <div
+      className="rounded-2xl flex flex-col items-center justify-center gap-4 overflow-hidden animate-fade-in"
+      style={{
+        animationDelay: '300ms',
+        background: 'var(--t-bg)',
+        border: '1px solid var(--t-border)',
+        aspectRatio: '16/9',
+      }}
+    >
+      <div
+        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+        style={{ background: 'rgba(232,99,58,0.15)', border: '1px solid rgba(232,99,58,0.2)' }}
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8633a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>
+      </div>
+      <p className="text-sm" style={{ color: 'var(--t-gray)' }}>演示视频即将上线</p>
+    </div>
+  );
+}
+
+function VideoPlayer({ src }: { src: string }) {
+  return (
+    <div
+      className="rounded-2xl overflow-hidden animate-fade-in"
+      style={{
+        animationDelay: '300ms',
+        border: '1px solid var(--t-border)',
+        boxShadow: '0 8px 40px rgba(0,0,0,0.5)',
+      }}
+    >
+      <video
+        src={src}
+        autoPlay
+        muted
+        loop
+        playsInline
+        controls
+        className="w-full block"
+        style={{ aspectRatio: '16/9', background: 'var(--t-bg)' }}
+      />
+    </div>
+  );
+}
 
 const DEMO_PROFILE = {
   username: 'demo',
@@ -14,7 +66,50 @@ const DEMO_PROFILE = {
     { platform: 'GitHub', url: 'https://github.com/maidang' },
     { platform: 'Twitter', url: 'https://twitter.com/maidang' },
   ],
-  commands: DEFAULT_COMMANDS,
+  commands: [
+    {
+      id: 'demo-whoami',
+      name: 'whoami',
+      description: '关于我',
+      templateType: 'keyvalue' as const,
+      content: '姓名: 麦当\n城市: 杭州\n身份: 独立开发者',
+    },
+    {
+      id: 'demo-projects',
+      name: 'projects',
+      description: '项目',
+      templateType: 'list' as const,
+      content: 'VibeOPC\n自动发布工具\n个人内容站',
+    },
+    {
+      id: 'demo-skills',
+      name: 'skills',
+      description: '技能',
+      templateType: 'grouplist' as const,
+      content: '## 技术栈\n- React / Next.js\n- Node.js / Prisma\n\n## 正在做\n- 命令行产品\n- 个人品牌工具',
+    },
+    {
+      id: 'demo-notes',
+      name: 'notes',
+      description: '近况',
+      templateType: 'markdown' as const,
+      content: '**最近在做**\n- 打磨 CLI 名片体验\n- 优化发布流程\n- 补更多模板',
+    },
+    {
+      id: 'demo-now',
+      name: 'now',
+      description: '状态',
+      templateType: 'free' as const,
+      content: '正在杭州写代码，也在持续做内容和产品实验。',
+    },
+    {
+      id: 'demo-links',
+      name: 'links',
+      description: '链接',
+      templateType: 'keyvalue' as const,
+      content: '',
+    },
+  ],
 };
 
 const FEATURES = [
@@ -43,6 +138,8 @@ const AUDIENCES = [
 ];
 
 export default function Home() {
+  const [previewCommand, setPreviewCommand] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen bg-black text-white/95">
       {/* Header */}
@@ -68,39 +165,100 @@ export default function Home() {
 
       <main>
         {/* Hero */}
-        <section className="max-w-5xl mx-auto px-6 pt-24 pb-32 text-center">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-8 text-xs rounded-full border animate-fade-in"
-            style={{ background: 'var(--accent-dim)', borderColor: 'var(--accent-border)', color: 'var(--accent)' }}>
-            <span>AI 时代的数字名片</span>
+        <section className="max-w-6xl mx-auto px-6 pt-20 pb-24">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-center">
+            <div className="max-w-xl">
+              <div
+                className="inline-flex items-center gap-2 px-3 py-1 mb-8 text-xs rounded-full border animate-fade-in"
+                style={{ background: 'var(--accent-dim)', borderColor: 'var(--accent-border)', color: 'var(--accent)' }}
+              >
+                <span>AI 时代的数字名片</span>
+              </div>
+
+              <h1
+                className="text-4xl md:text-5xl font-semibold tracking-tight mb-5 leading-tight animate-fade-in"
+                style={{ animationDelay: '60ms' }}
+              >
+                一条命令，让别人和 AI
+                <br className="hidden sm:block" />
+                立刻知道你是谁
+              </h1>
+
+              <p
+                className="text-base mb-8 leading-relaxed animate-fade-in"
+                style={{ color: 'var(--text-muted)', animationDelay: '120ms' }}
+              >
+                帮任何人快速生成专属 CLI 名片工具。你的经历、作品、链接和联系方式，都可以被一个命令直接读取。
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3 mb-8 animate-fade-in" style={{ animationDelay: '180ms' }}>
+                <Link href="/create" className="btn btn-primary px-6 py-3">
+                  开始创建我的名片
+                </Link>
+                <button
+                  onClick={() => navigator.clipboard.writeText('npx @vibeopc/demo')}
+                  className="btn btn-outline px-6 py-3"
+                >
+                  复制体验命令
+                </button>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3 animate-fade-in" style={{ animationDelay: '240ms' }}>
+                {FEATURES.map((feature) => (
+                  <div
+                    key={feature.title}
+                    className="rounded-2xl p-4"
+                    style={{ background: 'var(--surface)', border: '1px solid var(--border)' }}
+                  >
+                    <div className="text-xl mb-2">{feature.emoji}</div>
+                    <h2 className="text-sm font-semibold mb-1">{feature.title}</h2>
+                    <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                      {feature.desc}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
+              <div className="rounded-[28px] p-4 md:p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <div>
+                    <p className="text-sm font-semibold">CLI / CUI 演示视频</p>
+                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                      把视频地址填到 `HOME_VIDEO_URL`，首页右侧会直接展示效果。
+                    </p>
+                  </div>
+                  <div className="badge">Video URL</div>
+                </div>
+
+                {HOME_VIDEO_URL ? (
+                  <VideoPlayer src={HOME_VIDEO_URL} />
+                ) : (
+                  <VideoPlaceholder />
+                )}
+              </div>
+            </div>
           </div>
 
-          {/* Heading */}
-          <h1 className="text-4xl md:text-5xl font-semibold tracking-tight mb-5 leading-tight animate-fade-in" style={{ animationDelay: '60ms' }}>
-            一条命令，让全世界<br className="hidden sm:block" />了解你
-          </h1>
-
-          {/* Subheading */}
-          <p className="text-base mb-10 max-w-md mx-auto leading-relaxed animate-fade-in" style={{ color: 'var(--text-muted)', animationDelay: '120ms' }}>
-            帮任何人快速生成专属 CLI 名片工具，让 AI / 他人只需一个命令就能了解你是谁、会什么、在哪里找到你。
-          </p>
-
-          {/* CTA */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-16 animate-fade-in" style={{ animationDelay: '180ms' }}>
-            <Link href="/create" className="btn btn-primary px-6 py-3">
-              开始创建我的名片
-            </Link>
-            <button
-              onClick={() => navigator.clipboard.writeText('npx @vibeopc/demo')}
-              className="btn btn-outline px-6 py-3"
-            >
-              npx @vibeopc/demo →
-            </button>
-          </div>
-
-          {/* Demo Terminal */}
-          <div className="max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '240ms' }}>
-            <Terminal profile={DEMO_PROFILE} className="w-full" />
+          <div className="mt-12 animate-fade-in" style={{ animationDelay: '420ms' }}>
+            <div className="flex items-center justify-between gap-4 mb-4">
+              <div>
+                <p className="text-sm font-semibold">终端预览</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  视频之外，首页也保留一份静态终端示意，方便快速理解交互。
+                </p>
+              </div>
+              <code className="text-xs px-3 py-1 rounded-full" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--t-green)' }}>
+                npx @vibeopc/demo
+              </code>
+            </div>
+            <Terminal
+              profile={DEMO_PROFILE}
+              showCommandOutput={previewCommand}
+              onPreviewCommand={setPreviewCommand}
+              className="w-full"
+            />
           </div>
         </section>
 
@@ -111,7 +269,7 @@ export default function Home() {
               为什么选择 VibeOPC？
             </h2>
             <div className="grid md:grid-cols-3 gap-4">
-              {FEATURES.map((f, i) => (
+              {FEATURES.map((f) => (
                 <div
                   key={f.title}
                   className="p-6 rounded-2xl"

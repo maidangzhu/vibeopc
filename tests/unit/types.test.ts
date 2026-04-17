@@ -1,4 +1,4 @@
-import { DEFAULT_COMMANDS, SOCIAL_PLATFORMS, UserProfile, Command } from '@/lib/types';
+import { DEFAULT_COMMANDS, SOCIAL_PLATFORMS, UserProfile, getSocialPlatformLabel } from '@/lib/types';
 
 describe('types', () => {
   describe('DEFAULT_COMMANDS', () => {
@@ -51,6 +51,12 @@ describe('types', () => {
         expect(p.value.length).toBeGreaterThan(0);
         expect(p.label.length).toBeGreaterThan(0);
       });
+    });
+
+    it('可以把平台 value 转成展示文案', () => {
+      expect(getSocialPlatformLabel('github')).toBe('GitHub');
+      expect(getSocialPlatformLabel('twitter')).toBe('Twitter / X');
+      expect(getSocialPlatformLabel('custom-platform')).toBe('custom-platform');
     });
   });
 

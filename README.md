@@ -20,6 +20,32 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## AI Draft Generation
+
+The `/create` page now supports a natural-language flow powered by Moonshot. Add the following environment variable before using AI draft generation:
+
+```bash
+MOONSHOT_API_KEY=your_moonshot_api_key
+```
+
+Optional:
+
+```bash
+MOONSHOT_MODEL=moonshot-v1-8k
+```
+
+You can run the mocked unit tests with:
+
+```bash
+npm test -- --runInBand tests/unit/ai.test.ts tests/unit/generate-route.test.ts
+```
+
+And, when `MOONSHOT_API_KEY` is available, a live model verification test with:
+
+```bash
+npm test -- --runInBand tests/integration/moonshot.live.test.ts
+```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

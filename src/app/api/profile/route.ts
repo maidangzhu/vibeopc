@@ -4,77 +4,97 @@ import { prisma } from '@/lib/db';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { username, name, bio, location, avatarUrl, commands, socialLinks, templateId } = body;
+    const { username, name, bio, location, avatarUrl, commands, socialLinks, templateId, originalUsername } = body;
+    const normalizedUsername = String(username || '').trim();
+    const normalizedOriginalUsername = String(originalUsername || '').trim();
 
-    if (!username || !name) {
+    if (!normalizedUsername || !name) {
       return NextResponse.json(
         { error: '用户名和姓名是必填项' },
         { status: 400 }
       );
     }
 
-    if (!/^[a-z0-9_-]+$/.test(username)) {
+    if (!/^[a-z0-9_-]+$/.test(normalizedUsername)) {
       return NextResponse.json(
         { error: '用户名只能包含小写字母、数字、下划线和连字符' },
         { status: 400 }
       );
     }
 
-    // Upsert profile
-    const updateData: Record<string, unknown> = {
-      name,
-      bio: bio || '',
-      location: location || '',
-      avatarUrl: avatarUrl || '',
-    };
-    if (templateId) updateData.templateId = templateId;
+    if (normalizedOriginalUsername && normalizedOriginalUsername !== normalizedUsername) {
+      return NextResponse.json(
+        { error: '当前版本暂不支持修改用户名，请使用新用户名重新创建' },
+        { status: 400 }
+      );
+    }
 
-    const profile = await prisma.profile.upsert({
-      where: { username },
-      update: updateData,
-      create: {
-        username,
-        name,
-        bio: bio || '',
-        location: location || '',
-        avatarUrl: avatarUrl || '',
-        status: 'draft',
-        templateId: templateId || 'personal',
-      },
+    const existingProfile = await prisma.profile.findUnique({
+      where: { username: normalizedUsername },
+      select: { id: true },
     });
 
-    // Delete old commands and social links
-    await prisma.command.deleteMany({ where: { profileId: profile.id } });
-    await prisma.socialLink.deleteMany({ where: { profileId: profile.id } });
-
-    // Create commands
-    if (commands && commands.length > 0) {
-      await prisma.command.createMany({
-        data: commands.map((cmd: { name: string; description: string; content: string; templateType?: string }, i: number) => ({
-          profileId: profile.id,
-          name: cmd.name,
-          description: cmd.description || '',
-          content: cmd.content || '',
-          sortOrder: i,
-          templateType: cmd.templateType || 'free',
-        })),
-      });
+    if (existingProfile && normalizedOriginalUsername !== normalizedUsername) {
+      return NextResponse.json(
+        { error: '用户名已被占用，请换一个' },
+        { status: 409 }
+      );
     }
 
-    // Create social links
-    if (socialLinks && socialLinks.length > 0) {
-      await prisma.socialLink.createMany({
-        data: socialLinks.map((link: { platform: string; url: string }) => ({
-          profileId: profile.id,
-          platform: link.platform,
-          url: link.url,
-        })),
-      });
-    }
+    await prisma.$transaction(async (tx) => {
+      const savedProfile = existingProfile
+        ? await tx.profile.update({
+            where: { username: normalizedUsername },
+            data: {
+              name,
+              bio: bio || '',
+              location: location || '',
+              avatarUrl: avatarUrl || '',
+              templateId: templateId || 'personal',
+            },
+          })
+        : await tx.profile.create({
+            data: {
+              username: normalizedUsername,
+              name,
+              bio: bio || '',
+              location: location || '',
+              avatarUrl: avatarUrl || '',
+              status: 'draft',
+              templateId: templateId || 'personal',
+            },
+          });
+
+      await tx.command.deleteMany({ where: { profileId: savedProfile.id } });
+      await tx.socialLink.deleteMany({ where: { profileId: savedProfile.id } });
+
+      if (commands && commands.length > 0) {
+        await tx.command.createMany({
+          data: commands.map((cmd: { name: string; description: string; content: string; templateType?: string }, i: number) => ({
+            profileId: savedProfile.id,
+            name: cmd.name,
+            description: cmd.description || '',
+            content: cmd.content || '',
+            sortOrder: i,
+            templateType: cmd.templateType || 'free',
+          })),
+        });
+      }
+
+      if (socialLinks && socialLinks.length > 0) {
+        await tx.socialLink.createMany({
+          data: socialLinks.map((link: { platform: string; url: string }) => ({
+            profileId: savedProfile.id,
+            platform: link.platform,
+            url: link.url,
+          })),
+        });
+      }
+    });
 
     // Fetch updated profile with relations
     const updated = await prisma.profile.findUnique({
-      where: { username },
+      where: { username: normalizedUsername },
       include: { commands: { orderBy: { sortOrder: 'asc' } }, socialLinks: true },
     });
 

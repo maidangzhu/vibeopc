@@ -1,4 +1,4 @@
-import { UserProfile, TemplateType } from './types';
+import { getSocialPlatformLabel, UserProfile, TemplateType } from './types';
 
 // ─── Content renderers ─────────────────────────────────────────
 
@@ -138,7 +138,7 @@ function buildLinksCase(socialLinks: { platform: string; url: string }[]): strin
     ].join('\n');
   }
   const items = socialLinks
-    .map((l) => `      log(gray + '  ' + reset + white + '${escape(l.platform + ':')}' + reset + cyan + ' ${escape(l.url)}' + reset);`)
+    .map((l) => `      log(gray + '  ' + reset + white + '${escape(getSocialPlatformLabel(l.platform) + ':')}' + reset + cyan + ' ${escape(l.url)}' + reset);`)
     .join('\n');
   return [
     `    case 'links':`,
@@ -343,7 +343,7 @@ function generateREADME(profile: UserProfile): string {
     lines.push('## 链接');
     lines.push('');
     for (const link of profile.socialLinks) {
-      lines.push(`- [${link.platform}](${link.url})`);
+      lines.push(`- [${getSocialPlatformLabel(link.platform)}](${link.url})`);
     }
     lines.push('');
   }

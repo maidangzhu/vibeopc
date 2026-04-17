@@ -1,6 +1,7 @@
 'use client';
 
-import { UserProfile } from '@/lib/types';
+import { useEffect, useState } from 'react';
+import { getSocialPlatformLabel, TemplateType, UserProfile } from '@/lib/types';
 
 interface TerminalProps {
   profile: UserProfile;
@@ -9,11 +10,72 @@ interface TerminalProps {
   className?: string;
 }
 
+function renderFreeContent(content: string): string {
+  return content;
+}
+
+function renderKeyValueContent(content: string): string {
+  const lines = content.split('\n').map((line) => line.trim()).filter(Boolean);
+  return lines.length > 0 ? lines.join('\n') : '暂无内容';
+}
+
+function renderListContent(content: string): string {
+  const lines = content.split('\n').map((line) => line.trim()).filter(Boolean);
+  return lines.length > 0 ? lines.map((line) => `• ${line}`).join('\n') : '暂无内容';
+}
+
+function renderGroupListContent(content: string): string {
+  const lines = content.split('\n');
+  const rendered = lines
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return '';
+      if (trimmed.startsWith('## ')) return trimmed.slice(3);
+      if (trimmed.startsWith('**') && trimmed.endsWith('**')) return trimmed.slice(2, -2);
+      if (trimmed.startsWith('- ')) return `  • ${trimmed.slice(2)}`;
+      return `  ${trimmed}`;
+    })
+    .filter(Boolean);
+
+  return rendered.length > 0 ? rendered.join('\n') : '暂无内容';
+}
+
+function renderMarkdownContent(content: string): string {
+  const lines = content.split('\n');
+  const rendered = lines.map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return '';
+    if (trimmed.startsWith('**') && trimmed.endsWith('**')) return trimmed.slice(2, -2);
+    if (trimmed.startsWith('- ')) return `• ${trimmed.slice(2)}`;
+    return trimmed;
+  });
+
+  return rendered.filter(Boolean).join('\n') || '暂无内容';
+}
+
+function renderContentByTemplate(templateType: TemplateType, content: string): string {
+  switch (templateType) {
+    case 'keyvalue':
+      return renderKeyValueContent(content);
+    case 'list':
+      return renderListContent(content);
+    case 'grouplist':
+      return renderGroupListContent(content);
+    case 'markdown':
+      return renderMarkdownContent(content);
+    case 'free':
+    default:
+      return renderFreeContent(content);
+  }
+}
+
 function getCommandOutput(profile: UserProfile, commandName: string): string {
   const cmd = profile.commands.find((c) => c.name === commandName);
   if (!cmd) return '命令不存在';
 
-  if (cmd.content && cmd.content.trim()) return cmd.content;
+  if (cmd.content && cmd.content.trim()) {
+    return renderContentByTemplate(cmd.templateType, cmd.content);
+  }
 
   switch (commandName) {
     case 'whoami':
@@ -22,7 +84,7 @@ function getCommandOutput(profile: UserProfile, commandName: string): string {
     case 'projects': return '暂无项目';
     case 'links':
       if (profile.socialLinks.length === 0) return '暂无链接';
-      return profile.socialLinks.map((l) => `  - ${l.platform}: ${l.url}`).join('\n');
+      return profile.socialLinks.map((l) => `  - ${getSocialPlatformLabel(l.platform)}: ${l.url}`).join('\n');
     default:
       return cmd.content || '暂无内容';
   }
@@ -35,6 +97,22 @@ export default function Terminal({
   className = '',
 }: TerminalProps) {
   const packageName = `@vibeopc/${profile.username || 'demo'}`;
+  const [lastLoginText, setLastLoginText] = useState<string | null>(null);
+
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      setLastLoginText(
+        new Date().toLocaleDateString('zh-CN', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+      );
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, []);
 
   return (
     <div
@@ -62,11 +140,8 @@ export default function Terminal({
         style={{ fontFamily: 'var(--font-mono)', fontSize: '13px' }}
       >
         {/* Last login */}
-        <div className="text-xs mb-4" style={{ color: 'var(--t-gray)' }}>
-          Last login:{' '}
-          {new Date().toLocaleDateString('zh-CN', {
-            month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-          })} on ttys000
+        <div className="text-xs mb-4" style={{ color: 'var(--t-gray)' }} suppressHydrationWarning>
+          {lastLoginText ? `Last login: ${lastLoginText} on ttys000` : 'Last login: -- on ttys000'}
         </div>
 
         {/* Command prompt line */}
@@ -132,29 +207,35 @@ export default function Terminal({
 
             {/* Command list */}
             <div className="space-y-1 mb-5">
-              {profile.commands.map((cmd) => (
-                <div
-                  key={cmd.id}
-                  className="group flex items-center gap-4 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
-                  style={{ color: 'var(--t-text)' }}
-                  onClick={() => onPreviewCommand && onPreviewCommand(cmd.name)}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                >
-                  <span
-                    className="font-medium min-w-[88px]"
-                    style={{ color: 'var(--t-green)' }}
+              {profile.commands.length > 0 ? (
+                profile.commands.map((cmd) => (
+                  <div
+                    key={cmd.id}
+                    className="group flex items-center gap-4 px-2 py-1.5 rounded-lg cursor-pointer transition-colors"
+                    style={{ color: 'var(--t-text)' }}
+                    onClick={() => onPreviewCommand && onPreviewCommand(cmd.name)}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                   >
-                    {cmd.name}
-                  </span>
-                  <span className="text-sm" style={{ color: 'var(--t-gray)' }}>
-                    {cmd.description}
-                  </span>
-                  <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-xs" style={{ color: 'var(--t-gray)' }}>
-                    ↗
-                  </span>
+                    <span
+                      className="font-medium min-w-[88px]"
+                      style={{ color: 'var(--t-green)' }}
+                    >
+                      {cmd.name}
+                    </span>
+                    <span className="text-sm" style={{ color: 'var(--t-gray)' }}>
+                      {cmd.description}
+                    </span>
+                    <span className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity text-xs" style={{ color: 'var(--t-gray)' }}>
+                      ↗
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="px-2 py-3 text-sm" style={{ color: 'var(--t-gray)' }}>
+                  还没有命令。先在左侧用自然语言生成一个 CLI 草稿。
                 </div>
-              ))}
+              )}
             </div>
 
             <div className="mb-5" style={{ borderTop: '1px solid var(--t-divider)' }} />

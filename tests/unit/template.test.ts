@@ -81,6 +81,10 @@ describe('generateIndex', () => {
   it('links 命令在 socialLinks 非空时包含平台和 URL', () => {
     const profile: UserProfile = {
       ...baseProfile,
+      socialLinks: [
+        { platform: 'github', url: 'https://github.com/testuser' },
+        { platform: 'twitter', url: 'https://twitter.com/testuser' },
+      ],
       commands: [
         { id: '1', name: 'whoami', description: '关于我', content: '', templateType: 'keyvalue' },
         { id: '2', name: 'links', description: '链接', content: '', templateType: 'keyvalue' },
