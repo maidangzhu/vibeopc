@@ -460,7 +460,7 @@ export function normalizeGeneratedDraft(
     })
     .filter((command) => Boolean(command.name));
 
-  let finalCommands = commands;
+  let finalCommands: UserProfile['commands'] = commands;
   if (finalCommands.length === 0) {
     warnings.push('模型没有生成有效命令，已自动补全基础命令。');
     finalCommands = buildFallbackCommands(options.prompt, {
@@ -472,15 +472,17 @@ export function normalizeGeneratedDraft(
   }
 
   if (dedupedSocialLinks.length > 0 && !finalCommands.some((command) => command.name === 'links')) {
+    const linksCommand: UserProfile['commands'][number] = {
+      id: createId('cmd'),
+      name: 'links',
+      description: '链接',
+      templateType: 'keyvalue',
+      content: '',
+    };
+
     finalCommands = [
       ...finalCommands,
-      {
-        id: createId('cmd'),
-        name: 'links',
-        description: '链接',
-        templateType: 'keyvalue',
-        content: '',
-      },
+      linksCommand,
     ].slice(0, MAX_COMMANDS);
     warnings.push('已自动补充 links 命令，确保社交链接能在 CLI 中显示。');
   }
