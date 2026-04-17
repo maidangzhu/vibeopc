@@ -7,31 +7,6 @@ import Terminal from '@/components/Terminal';
 /** 视频演示 URL，提供后修改此处即可 */
 const HOME_VIDEO_URL = 'https://regqaz1e4giqsltu.public.blob.vercel-storage.com/video/demo.mp4';
 
-// Placeholder shown when no video URL is configured
-function VideoPlaceholder() {
-  return (
-    <div
-      className="rounded-2xl flex flex-col items-center justify-center gap-4 overflow-hidden animate-fade-in"
-      style={{
-        animationDelay: '300ms',
-        background: 'var(--t-bg)',
-        border: '1px solid var(--t-border)',
-        aspectRatio: '16/9',
-      }}
-    >
-      <div
-        className="w-14 h-14 rounded-2xl flex items-center justify-center"
-        style={{ background: 'rgba(232,99,58,0.15)', border: '1px solid rgba(232,99,58,0.2)' }}
-      >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e8633a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polygon points="5 3 19 12 5 21 5 3" />
-        </svg>
-      </div>
-      <p className="text-sm" style={{ color: 'var(--t-gray)' }}>演示视频即将上线</p>
-    </div>
-  );
-}
-
 function VideoPlayer({ src }: { src: string }) {
   return (
     <div
@@ -221,23 +196,7 @@ export default function Home() {
             </div>
 
             <div className="animate-fade-in" style={{ animationDelay: '300ms' }}>
-              <div className="rounded-[28px] p-4 md:p-5" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
-                <div className="flex items-center justify-between gap-4 mb-4">
-                  <div>
-                    <p className="text-sm font-semibold">CLI / CUI 演示视频</p>
-                    <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                      把视频地址填到 `HOME_VIDEO_URL`，首页右侧会直接展示效果。
-                    </p>
-                  </div>
-                  <div className="badge">Video URL</div>
-                </div>
-
-                {HOME_VIDEO_URL ? (
-                  <VideoPlayer src={HOME_VIDEO_URL} />
-                ) : (
-                  <VideoPlaceholder />
-                )}
-              </div>
+              <VideoPlayer src={HOME_VIDEO_URL} />
             </div>
           </div>
 
