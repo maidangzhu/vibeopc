@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Terminal from '@/components/Terminal';
 
 /** 视频演示 URL，提供后修改此处即可 */
-const HOME_VIDEO_URL = '';
+const HOME_VIDEO_URL = 'https://regqaz1e4giqsltu.public.blob.vercel-storage.com/video/demo.mp4';
 
 // Placeholder shown when no video URL is configured
 function VideoPlaceholder() {
@@ -57,7 +57,7 @@ function VideoPlayer({ src }: { src: string }) {
 }
 
 const DEMO_PROFILE = {
-  username: 'demo',
+  username: 'go',
   name: '麦当',
   bio: '全栈工程师 / AI 爱好者 / 独立开发者',
   avatarUrl: '',
@@ -68,42 +68,42 @@ const DEMO_PROFILE = {
   ],
   commands: [
     {
-      id: 'demo-whoami',
+      id: 'go-whoami',
       name: 'whoami',
       description: '关于我',
       templateType: 'keyvalue' as const,
       content: '姓名: 麦当\n城市: 杭州\n身份: 独立开发者',
     },
     {
-      id: 'demo-projects',
+      id: 'go-projects',
       name: 'projects',
       description: '项目',
       templateType: 'list' as const,
       content: 'VibeOPC\n自动发布工具\n个人内容站',
     },
     {
-      id: 'demo-skills',
+      id: 'go-skills',
       name: 'skills',
       description: '技能',
       templateType: 'grouplist' as const,
       content: '## 技术栈\n- React / Next.js\n- Node.js / Prisma\n\n## 正在做\n- 命令行产品\n- 个人品牌工具',
     },
     {
-      id: 'demo-notes',
+      id: 'go-notes',
       name: 'notes',
       description: '近况',
       templateType: 'markdown' as const,
       content: '**最近在做**\n- 打磨 CLI 名片体验\n- 优化发布流程\n- 补更多模板',
     },
     {
-      id: 'demo-now',
+      id: 'go-now',
       name: 'now',
       description: '状态',
       templateType: 'free' as const,
       content: '正在杭州写代码，也在持续做内容和产品实验。',
     },
     {
-      id: 'demo-links',
+      id: 'go-links',
       name: 'links',
       description: '链接',
       templateType: 'keyvalue' as const,
@@ -196,7 +196,7 @@ export default function Home() {
                   开始创建我的名片
                 </Link>
                 <button
-                  onClick={() => navigator.clipboard.writeText('npx @vibeopc/demo')}
+                  onClick={() => navigator.clipboard.writeText('npx @vibeopc/go')}
                   className="btn btn-outline px-6 py-3"
                 >
                   复制体验命令
@@ -250,7 +250,7 @@ export default function Home() {
                 </p>
               </div>
               <code className="text-xs px-3 py-1 rounded-full" style={{ background: 'var(--surface)', border: '1px solid var(--border)', color: 'var(--t-green)' }}>
-                npx @vibeopc/demo
+                npx @vibeopc/go
               </code>
             </div>
             <Terminal

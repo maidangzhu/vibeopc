@@ -96,7 +96,7 @@ export default function Terminal({
   onPreviewCommand,
   className = '',
 }: TerminalProps) {
-  const packageName = `@vibeopc/${profile.username || 'demo'}`;
+  const packageName = `@vibeopc/${profile.username || 'go'}`;
   const [lastLoginText, setLastLoginText] = useState<string | null>(null);
 
   useEffect(() => {
