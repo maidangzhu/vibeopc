@@ -25,7 +25,7 @@ function VideoPlayer({ src }: { src: string }) {
         playsInline
         controls
         className="w-full block"
-        style={{ aspectRatio: '16/9', background: 'var(--t-bg)' }}
+        style={{ background: 'var(--t-bg)' }}
       />
     </div>
   );
@@ -38,8 +38,7 @@ const DEMO_PROFILE = {
   avatarUrl: '',
   location: '杭州',
   socialLinks: [
-    { platform: 'GitHub', url: 'https://github.com/maidang' },
-    { platform: 'Twitter', url: 'https://twitter.com/maidang' },
+    { platform: 'GitHub', url: 'https://github.com/maidangzhu' },
   ],
   commands: [
     {

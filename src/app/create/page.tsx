@@ -328,7 +328,7 @@ export default function CreatePage() {
             <div>
               <h1 className="text-2xl font-semibold mb-2">发布成功！</h1>
               <p className="text-white/40 text-sm leading-relaxed">
-                任何人现在都可以通过以下命令认识你 · npm 传播可能需要 1-2 分钟
+                任何人很快就可以通过以下命令认识你 · npm 同步可能需要 5-10 分钟
               </p>
             </div>
 
@@ -377,7 +377,7 @@ export default function CreatePage() {
             </div>
 
             <p className="text-white/20 text-xs">
-              如遇 404，稍等 1-2 分钟后再试 · 永久有效，随时 npx 访问
+              如遇 404，稍等 5-10 分钟后再试 · npm 同步有时会慢一点
             </p>
           </div>
         </div>
