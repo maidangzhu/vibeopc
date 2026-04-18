@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 export async function POST(request: Request) {
   try {
@@ -9,24 +9,15 @@ export async function POST(request: Request) {
     const normalizedOriginalUsername = String(originalUsername || '').trim();
 
     if (!normalizedUsername || !name) {
-      return NextResponse.json(
-        { error: '用户名和姓名是必填项' },
-        { status: 400 }
-      );
+      return apiError('用户名和姓名是必填项', 400);
     }
 
     if (!/^[a-z0-9_-]+$/.test(normalizedUsername)) {
-      return NextResponse.json(
-        { error: '用户名只能包含小写字母、数字、下划线和连字符' },
-        { status: 400 }
-      );
+      return apiError('用户名只能包含小写字母、数字、下划线和连字符', 400);
     }
 
     if (normalizedOriginalUsername && normalizedOriginalUsername !== normalizedUsername) {
-      return NextResponse.json(
-        { error: '当前版本暂不支持修改用户名，请使用新用户名重新创建' },
-        { status: 400 }
-      );
+      return apiError('当前版本暂不支持修改用户名，请使用新用户名重新创建', 400);
     }
 
     const existingProfile = await prisma.profile.findUnique({
@@ -35,10 +26,7 @@ export async function POST(request: Request) {
     });
 
     if (existingProfile && normalizedOriginalUsername !== normalizedUsername) {
-      return NextResponse.json(
-        { error: '用户名已被占用，请换一个' },
-        { status: 409 }
-      );
+      return apiError('用户名已被占用，请换一个', 409);
     }
 
     await prisma.$transaction(async (tx) => {
@@ -98,12 +86,9 @@ export async function POST(request: Request) {
       include: { commands: { orderBy: { sortOrder: 'asc' } }, socialLinks: true },
     });
 
-    return NextResponse.json({ success: true, profile: updated });
+    return apiSuccess({ profile: updated }, '保存成功');
   } catch (error) {
     console.error('Profile save error:', error);
-    return NextResponse.json(
-      { error: '保存失败，请稍后重试' },
-      { status: 500 }
-    );
+    return apiError('保存失败，请稍后重试', 500);
   }
 }

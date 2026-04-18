@@ -141,7 +141,11 @@ export default function CreatePage() {
   const [publishStep, setPublishStep] = useState<'idle' | 'saving' | 'publishing' | 'done' | 'error'>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishedPkg, setPublishedPkg] = useState<string | null>(null);
+  const [publishedVersion, setPublishedVersion] = useState<string | null>(null);
   const [npmUrl, setNpmUrl] = useState<string | null>(null);
+  const [notifyEmail, setNotifyEmail] = useState('');
+  const [notifyStep, setNotifyStep] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [notifyMessage, setNotifyMessage] = useState<string | null>(null);
   const [previewCommand, setPreviewCommand] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [usernameTaken, setUsernameTaken] = useState(false);
@@ -160,7 +164,7 @@ export default function CreatePage() {
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(data.error || '保存失败');
+      throw new Error(data.message || '保存失败');
     }
 
     if (!initialUsername) {
@@ -180,7 +184,7 @@ export default function CreatePage() {
     fetch(`/api/profile/${username}`)
       .then((response) => (response.ok ? response.json() : Promise.reject()))
       .then((data) => {
-        const loadedProfile = data.profile;
+        const loadedProfile = data.data.profile;
         setProfile({
           username: loadedProfile.username,
           name: loadedProfile.name,
@@ -242,10 +246,10 @@ export default function CreatePage() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        throw new Error(data.error || '生成失败');
+        throw new Error(data.message || '生成失败');
       }
 
-      setProfile(data.profile);
+      setProfile(data.data.profile);
       setHasDraft(true);
       setActiveTab('profile');
       setPreviewCommand(null);
@@ -278,12 +282,15 @@ export default function CreatePage() {
 
       if (!publishResponse.ok) {
         const data = await publishResponse.json();
-        throw new Error(data.error || '发布失败');
+        throw new Error(data.message || '发布失败');
       }
 
       const publishData = await publishResponse.json();
-      setPublishedPkg(publishData.packageName || `@vibeopc/${profile.username}`);
-      setNpmUrl(publishData.npmUrl || `https://www.npmjs.com/package/@vibeopc/${profile.username}`);
+      setPublishedPkg(publishData.data.packageName || `@vibeopc/${profile.username}`);
+      setPublishedVersion(publishData.data.version || null);
+      setNpmUrl(publishData.data.npmUrl || `https://www.npmjs.com/package/@vibeopc/${profile.username}`);
+      setNotifyStep('idle');
+      setNotifyMessage(null);
       setPublishStep('done');
     } catch (error) {
       setPublishError(error instanceof Error ? error.message : '发布失败，请稍后重试');
@@ -313,6 +320,46 @@ export default function CreatePage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleNotifyMe = async () => {
+    if (!publishedPkg || !publishedVersion) {
+      setNotifyStep('error');
+      setNotifyMessage('当前没有可检查的发布版本');
+      return;
+    }
+
+    if (!notifyEmail.trim()) {
+      setNotifyStep('error');
+      setNotifyMessage('请先填写邮箱');
+      return;
+    }
+
+    setNotifyStep('submitting');
+    setNotifyMessage(null);
+
+    try {
+      const response = await fetch('/api/package-check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageName: publishedPkg,
+          expectedVersion: publishedVersion,
+          email: notifyEmail.trim(),
+        }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.message || '提交失败，请稍后重试');
+      }
+
+      setNotifyStep('success');
+      setNotifyMessage(data.message || '已开始检查 npm 同步状态');
+    } catch (error) {
+      setNotifyStep('error');
+      setNotifyMessage(error instanceof Error ? error.message : '提交失败，请稍后重试');
+    }
+  };
+
   if (publishStep === 'done') {
     return (
       <>
@@ -337,6 +384,42 @@ export default function CreatePage() {
               <code className="text-base font-mono" style={{ color: '#56d364' }}>
                 npx {publishedPkg}
               </code>
+            </div>
+
+            <div className="rounded-2xl p-5 text-left space-y-3" style={{ background: '#0d1117', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div>
+                <p className="text-sm font-medium">等同步好了再通知我</p>
+                <p className="text-xs mt-1 leading-relaxed" style={{ color: '#8b949e' }}>
+                  我们会每分钟检查一次，最多检查 10 分钟。npm 一旦同步完成，就给你发邮件。
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  value={notifyEmail}
+                  onChange={(event) => setNotifyEmail(event.target.value)}
+                  placeholder="you@example.com"
+                  className="flex-1 rounded-xl px-4 py-2.5 text-sm bg-transparent outline-none"
+                  style={{ border: '1px solid rgba(255,255,255,0.08)', color: '#fafafa' }}
+                />
+                <button
+                  onClick={handleNotifyMe}
+                  disabled={notifyStep === 'submitting'}
+                  className="btn btn-primary px-5 py-2.5 text-sm font-medium"
+                >
+                  {notifyStep === 'submitting' ? '提交中...' : '同步好了发邮件'}
+                </button>
+              </div>
+
+              {notifyMessage && (
+                <p
+                  className="text-xs leading-relaxed"
+                  style={{ color: notifyStep === 'error' ? '#f85149' : '#8b949e' }}
+                >
+                  {notifyMessage}
+                </p>
+              )}
             </div>
 
             <div className="flex gap-3 justify-center items-center">

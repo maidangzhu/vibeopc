@@ -386,7 +386,8 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   Profile: 'Profile',
   Command: 'Command',
-  SocialLink: 'SocialLink'
+  SocialLink: 'SocialLink',
+  PackageCheckJob: 'PackageCheckJob'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -402,7 +403,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "profile" | "command" | "socialLink"
+    modelProps: "profile" | "command" | "socialLink" | "packageCheckJob"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -628,6 +629,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    PackageCheckJob: {
+      payload: Prisma.$PackageCheckJobPayload<ExtArgs>
+      fields: Prisma.PackageCheckJobFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.PackageCheckJobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.PackageCheckJobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>
+        }
+        findFirst: {
+          args: Prisma.PackageCheckJobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.PackageCheckJobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>
+        }
+        findMany: {
+          args: Prisma.PackageCheckJobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>[]
+        }
+        create: {
+          args: Prisma.PackageCheckJobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>
+        }
+        createMany: {
+          args: Prisma.PackageCheckJobCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.PackageCheckJobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>[]
+        }
+        delete: {
+          args: Prisma.PackageCheckJobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>
+        }
+        update: {
+          args: Prisma.PackageCheckJobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>
+        }
+        deleteMany: {
+          args: Prisma.PackageCheckJobDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.PackageCheckJobUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.PackageCheckJobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>[]
+        }
+        upsert: {
+          args: Prisma.PackageCheckJobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$PackageCheckJobPayload>
+        }
+        aggregate: {
+          args: Prisma.PackageCheckJobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregatePackageCheckJob>
+        }
+        groupBy: {
+          args: Prisma.PackageCheckJobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PackageCheckJobGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.PackageCheckJobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.PackageCheckJobCountAggregateOutputType> | number
+        }
+      }
+    }
   }
 } & {
   other: {
@@ -705,6 +780,28 @@ export const SocialLinkScalarFieldEnum = {
 } as const
 
 export type SocialLinkScalarFieldEnum = (typeof SocialLinkScalarFieldEnum)[keyof typeof SocialLinkScalarFieldEnum]
+
+
+export const PackageCheckJobScalarFieldEnum = {
+  id: 'id',
+  profileId: 'profileId',
+  packageName: 'packageName',
+  expectedVersion: 'expectedVersion',
+  email: 'email',
+  status: 'status',
+  attempts: 'attempts',
+  maxAttempts: 'maxAttempts',
+  lastError: 'lastError',
+  sandboxId: 'sandboxId',
+  startedAt: 'startedAt',
+  expiresAt: 'expiresAt',
+  readyAt: 'readyAt',
+  notifiedAt: 'notifiedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PackageCheckJobScalarFieldEnum = (typeof PackageCheckJobScalarFieldEnum)[keyof typeof PackageCheckJobScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -890,6 +987,7 @@ export type GlobalOmitConfig = {
   profile?: Prisma.ProfileOmit
   command?: Prisma.CommandOmit
   socialLink?: Prisma.SocialLinkOmit
+  packageCheckJob?: Prisma.PackageCheckJobOmit
 }
 
 /* Types for Logging */

@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { generatePackage } from '@/lib/template';
 import { checkPackageExists, publishToNpm, getLatestVersion, incrementVersion } from '@/lib/npm';
 import { UserProfile } from '@/lib/types';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 export async function POST(request: Request) {
   try {
     const { username } = await request.json();
 
     if (!username) {
-      return NextResponse.json({ error: '用户名是必填项' }, { status: 400 });
+      return apiError('用户名是必填项', 400);
     }
 
     // 1. Read profile from database
@@ -22,10 +22,7 @@ export async function POST(request: Request) {
     });
 
     if (!dbProfile) {
-      return NextResponse.json(
-        { error: '名片不存在，请先保存配置' },
-        { status: 400 }
-      );
+      return apiError('名片不存在，请先保存配置', 400);
     }
 
     // Transform DB model to UserProfile for template
@@ -55,10 +52,7 @@ export async function POST(request: Request) {
     if (!dbProfile.npmPackage) {
       const exists = await checkPackageExists(packageName);
       if (exists) {
-        return NextResponse.json(
-          { error: '用户名已被占用，请尝试其他用户名' },
-          { status: 400 }
-        );
+        return apiError('用户名已被占用，请尝试其他用户名', 400);
       }
     } else {
       // Package already published — increment version to avoid conflict
@@ -74,7 +68,7 @@ export async function POST(request: Request) {
     // 5. Publish to npm
     const npmToken = process.env.NPM_PUBLISH_TOKEN;
     if (!npmToken) {
-      return NextResponse.json({ error: 'npm token 未配置' }, { status: 500 });
+      return apiError('npm token 未配置', 500);
     }
 
     const result = await publishToNpm(files, {
@@ -83,7 +77,7 @@ export async function POST(request: Request) {
     });
 
     if (!result.success) {
-      return NextResponse.json({ error: result.message }, { status: 500 });
+      return apiError(result.message, 500);
     }
 
     // 6. Update profile status in database
@@ -92,15 +86,14 @@ export async function POST(request: Request) {
       data: { npmPackage: packageName, status: 'published' },
     });
 
-    return NextResponse.json({
-      success: true,
+    return apiSuccess({
       packageName,
       version,
       command: `npx ${packageName}`,
       npmUrl: `https://www.npmjs.com/package/${packageName}`,
-    });
+    }, '发布成功');
   } catch (error) {
     console.error('Publish error:', error);
-    return NextResponse.json({ error: '发布失败，请稍后重试' }, { status: 500 });
+    return apiError('发布失败，请稍后重试', 500);
   }
 }

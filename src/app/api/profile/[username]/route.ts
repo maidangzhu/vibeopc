@@ -1,5 +1,5 @@
-import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { apiError, apiSuccess } from '@/lib/api-response';
 
 export async function GET(
   request: Request,
@@ -17,18 +17,12 @@ export async function GET(
     });
 
     if (!profile) {
-      return NextResponse.json(
-        { error: '名片不存在' },
-        { status: 404 }
-      );
+      return apiError('名片不存在', 404);
     }
 
-    return NextResponse.json({ profile });
+    return apiSuccess({ profile });
   } catch (error) {
     console.error('Profile fetch error:', error);
-    return NextResponse.json(
-      { error: '获取失败' },
-      { status: 500 }
-    );
+    return apiError('获取失败', 500);
   }
 }

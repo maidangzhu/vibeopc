@@ -56,3 +56,8 @@ export type Command = Prisma.CommandModel
  * 
  */
 export type SocialLink = Prisma.SocialLinkModel
+/**
+ * Model PackageCheckJob
+ * 
+ */
+export type PackageCheckJob = Prisma.PackageCheckJobModel

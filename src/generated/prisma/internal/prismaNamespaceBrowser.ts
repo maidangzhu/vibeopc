@@ -53,7 +53,8 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   Profile: 'Profile',
   Command: 'Command',
-  SocialLink: 'SocialLink'
+  SocialLink: 'SocialLink',
+  PackageCheckJob: 'PackageCheckJob'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -110,6 +111,28 @@ export const SocialLinkScalarFieldEnum = {
 } as const
 
 export type SocialLinkScalarFieldEnum = (typeof SocialLinkScalarFieldEnum)[keyof typeof SocialLinkScalarFieldEnum]
+
+
+export const PackageCheckJobScalarFieldEnum = {
+  id: 'id',
+  profileId: 'profileId',
+  packageName: 'packageName',
+  expectedVersion: 'expectedVersion',
+  email: 'email',
+  status: 'status',
+  attempts: 'attempts',
+  maxAttempts: 'maxAttempts',
+  lastError: 'lastError',
+  sandboxId: 'sandboxId',
+  startedAt: 'startedAt',
+  expiresAt: 'expiresAt',
+  readyAt: 'readyAt',
+  notifiedAt: 'notifiedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type PackageCheckJobScalarFieldEnum = (typeof PackageCheckJobScalarFieldEnum)[keyof typeof PackageCheckJobScalarFieldEnum]
 
 
 export const SortOrder = {

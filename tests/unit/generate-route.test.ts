@@ -22,6 +22,10 @@ describe('POST /api/generate', () => {
     );
 
     expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.code).toBe(400);
+    expect(data.message).toBe('用户名是必填项');
+    expect(data.data).toBeNull();
   });
 
   it('缺少 prompt 时返回 400', async () => {
@@ -34,6 +38,10 @@ describe('POST /api/generate', () => {
     );
 
     expect(response.status).toBe(400);
+    const data = await response.json();
+    expect(data.code).toBe(400);
+    expect(data.message).toBe('请先输入你的资料');
+    expect(data.data).toBeNull();
   });
 
   it('成功时返回规范化结果', async () => {
@@ -73,9 +81,10 @@ describe('POST /api/generate', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data.success).toBe(true);
-    expect(data.profile.name).toBe('麦当');
-    expect(data.warnings).toEqual(['已自动补全基础字段']);
+    expect(data.code).toBe(0);
+    expect(data.message).toBe('ok');
+    expect(data.data.profile.name).toBe('麦当');
+    expect(data.data.warnings).toEqual(['已自动补全基础字段']);
     expect(mockedGenerateProfileFromPrompt).toHaveBeenCalledWith({
       username: 'maidang',
       prompt: '我是独立开发者，想展示项目。',

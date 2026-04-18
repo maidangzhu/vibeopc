@@ -11,4 +11,5 @@
 export type * from './models/Profile'
 export type * from './models/Command'
 export type * from './models/SocialLink'
+export type * from './models/PackageCheckJob'
 export type * from './commonInputTypes'

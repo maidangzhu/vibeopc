@@ -21,7 +21,8 @@ model Profile {
   templateId String       @default("personal")
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
-  commands    Command[]
+  commands         Command[]
+  packageCheckJobs PackageCheckJob[]
   socialLinks SocialLink[]
 }
 
@@ -44,4 +45,27 @@ model SocialLink {
   platform  String
   url       String
   profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+model PackageCheckJob {
+  id              String   @id @default(cuid())
+  profileId        String
+  packageName      String
+  expectedVersion  String
+  email            String
+  status           String   @default("pending")
+  attempts         Int      @default(0)
+  maxAttempts      Int      @default(10)
+  lastError        String   @default("")
+  sandboxId        String   @default("")
+  startedAt        DateTime?
+  expiresAt        DateTime
+  readyAt          DateTime?
+  notifiedAt       DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, status])
+  @@index([status, expiresAt])
 }

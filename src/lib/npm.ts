@@ -1,5 +1,18 @@
 import { Sandbox } from '@vercel/sandbox';
 
+async function cleanupSandbox(
+  sandbox: Awaited<ReturnType<typeof Sandbox.create>> | null,
+  context: string
+): Promise<void> {
+  if (!sandbox) return;
+
+  try {
+    await sandbox.stop({ blocking: true });
+  } catch (error) {
+    console.error(`${context} sandbox cleanup failed:`, error);
+  }
+}
+
 export async function checkPackageExists(packageName: string): Promise<boolean> {
   try {
     const res = await fetch(`https://registry.npmjs.org/${packageName}`);
@@ -86,8 +99,6 @@ export async function publishToNpm(
       message: error instanceof Error ? error.message : '发布失败',
     };
   } finally {
-    if (sandbox) {
-      await sandbox.stop();
-    }
+    await cleanupSandbox(sandbox, 'npm publish');
   }
 }

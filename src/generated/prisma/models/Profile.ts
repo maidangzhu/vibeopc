@@ -231,6 +231,7 @@ export type ProfileWhereInput = {
   createdAt?: Prisma.DateTimeFilter<"Profile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Profile"> | Date | string
   commands?: Prisma.CommandListRelationFilter
+  packageCheckJobs?: Prisma.PackageCheckJobListRelationFilter
   socialLinks?: Prisma.SocialLinkListRelationFilter
 }
 
@@ -247,6 +248,7 @@ export type ProfileOrderByWithRelationInput = {
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   commands?: Prisma.CommandOrderByRelationAggregateInput
+  packageCheckJobs?: Prisma.PackageCheckJobOrderByRelationAggregateInput
   socialLinks?: Prisma.SocialLinkOrderByRelationAggregateInput
 }
 
@@ -266,6 +268,7 @@ export type ProfileWhereUniqueInput = Prisma.AtLeast<{
   createdAt?: Prisma.DateTimeFilter<"Profile"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Profile"> | Date | string
   commands?: Prisma.CommandListRelationFilter
+  packageCheckJobs?: Prisma.PackageCheckJobListRelationFilter
   socialLinks?: Prisma.SocialLinkListRelationFilter
 }, "id" | "username">
 
@@ -316,6 +319,7 @@ export type ProfileCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   commands?: Prisma.CommandCreateNestedManyWithoutProfileInput
+  packageCheckJobs?: Prisma.PackageCheckJobCreateNestedManyWithoutProfileInput
   socialLinks?: Prisma.SocialLinkCreateNestedManyWithoutProfileInput
 }
 
@@ -332,6 +336,7 @@ export type ProfileUncheckedCreateInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   commands?: Prisma.CommandUncheckedCreateNestedManyWithoutProfileInput
+  packageCheckJobs?: Prisma.PackageCheckJobUncheckedCreateNestedManyWithoutProfileInput
   socialLinks?: Prisma.SocialLinkUncheckedCreateNestedManyWithoutProfileInput
 }
 
@@ -348,6 +353,7 @@ export type ProfileUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   commands?: Prisma.CommandUpdateManyWithoutProfileNestedInput
+  packageCheckJobs?: Prisma.PackageCheckJobUpdateManyWithoutProfileNestedInput
   socialLinks?: Prisma.SocialLinkUpdateManyWithoutProfileNestedInput
 }
 
@@ -364,6 +370,7 @@ export type ProfileUncheckedUpdateInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   commands?: Prisma.CommandUncheckedUpdateManyWithoutProfileNestedInput
+  packageCheckJobs?: Prisma.PackageCheckJobUncheckedUpdateManyWithoutProfileNestedInput
   socialLinks?: Prisma.SocialLinkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
@@ -496,6 +503,20 @@ export type ProfileUpdateOneRequiredWithoutSocialLinksNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.ProfileUpdateToOneWithWhereWithoutSocialLinksInput, Prisma.ProfileUpdateWithoutSocialLinksInput>, Prisma.ProfileUncheckedUpdateWithoutSocialLinksInput>
 }
 
+export type ProfileCreateNestedOneWithoutPackageCheckJobsInput = {
+  create?: Prisma.XOR<Prisma.ProfileCreateWithoutPackageCheckJobsInput, Prisma.ProfileUncheckedCreateWithoutPackageCheckJobsInput>
+  connectOrCreate?: Prisma.ProfileCreateOrConnectWithoutPackageCheckJobsInput
+  connect?: Prisma.ProfileWhereUniqueInput
+}
+
+export type ProfileUpdateOneRequiredWithoutPackageCheckJobsNestedInput = {
+  create?: Prisma.XOR<Prisma.ProfileCreateWithoutPackageCheckJobsInput, Prisma.ProfileUncheckedCreateWithoutPackageCheckJobsInput>
+  connectOrCreate?: Prisma.ProfileCreateOrConnectWithoutPackageCheckJobsInput
+  upsert?: Prisma.ProfileUpsertWithoutPackageCheckJobsInput
+  connect?: Prisma.ProfileWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.ProfileUpdateToOneWithWhereWithoutPackageCheckJobsInput, Prisma.ProfileUpdateWithoutPackageCheckJobsInput>, Prisma.ProfileUncheckedUpdateWithoutPackageCheckJobsInput>
+}
+
 export type ProfileCreateWithoutCommandsInput = {
   id?: string
   username: string
@@ -508,6 +529,7 @@ export type ProfileCreateWithoutCommandsInput = {
   templateId?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  packageCheckJobs?: Prisma.PackageCheckJobCreateNestedManyWithoutProfileInput
   socialLinks?: Prisma.SocialLinkCreateNestedManyWithoutProfileInput
 }
 
@@ -523,6 +545,7 @@ export type ProfileUncheckedCreateWithoutCommandsInput = {
   templateId?: string
   createdAt?: Date | string
   updatedAt?: Date | string
+  packageCheckJobs?: Prisma.PackageCheckJobUncheckedCreateNestedManyWithoutProfileInput
   socialLinks?: Prisma.SocialLinkUncheckedCreateNestedManyWithoutProfileInput
 }
 
@@ -554,6 +577,7 @@ export type ProfileUpdateWithoutCommandsInput = {
   templateId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  packageCheckJobs?: Prisma.PackageCheckJobUpdateManyWithoutProfileNestedInput
   socialLinks?: Prisma.SocialLinkUpdateManyWithoutProfileNestedInput
 }
 
@@ -569,6 +593,7 @@ export type ProfileUncheckedUpdateWithoutCommandsInput = {
   templateId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  packageCheckJobs?: Prisma.PackageCheckJobUncheckedUpdateManyWithoutProfileNestedInput
   socialLinks?: Prisma.SocialLinkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
@@ -585,6 +610,7 @@ export type ProfileCreateWithoutSocialLinksInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   commands?: Prisma.CommandCreateNestedManyWithoutProfileInput
+  packageCheckJobs?: Prisma.PackageCheckJobCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileUncheckedCreateWithoutSocialLinksInput = {
@@ -600,6 +626,7 @@ export type ProfileUncheckedCreateWithoutSocialLinksInput = {
   createdAt?: Date | string
   updatedAt?: Date | string
   commands?: Prisma.CommandUncheckedCreateNestedManyWithoutProfileInput
+  packageCheckJobs?: Prisma.PackageCheckJobUncheckedCreateNestedManyWithoutProfileInput
 }
 
 export type ProfileCreateOrConnectWithoutSocialLinksInput = {
@@ -631,6 +658,7 @@ export type ProfileUpdateWithoutSocialLinksInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   commands?: Prisma.CommandUpdateManyWithoutProfileNestedInput
+  packageCheckJobs?: Prisma.PackageCheckJobUpdateManyWithoutProfileNestedInput
 }
 
 export type ProfileUncheckedUpdateWithoutSocialLinksInput = {
@@ -646,6 +674,87 @@ export type ProfileUncheckedUpdateWithoutSocialLinksInput = {
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   commands?: Prisma.CommandUncheckedUpdateManyWithoutProfileNestedInput
+  packageCheckJobs?: Prisma.PackageCheckJobUncheckedUpdateManyWithoutProfileNestedInput
+}
+
+export type ProfileCreateWithoutPackageCheckJobsInput = {
+  id?: string
+  username: string
+  name: string
+  bio?: string
+  avatarUrl?: string
+  location?: string
+  npmPackage?: string | null
+  status?: string
+  templateId?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  commands?: Prisma.CommandCreateNestedManyWithoutProfileInput
+  socialLinks?: Prisma.SocialLinkCreateNestedManyWithoutProfileInput
+}
+
+export type ProfileUncheckedCreateWithoutPackageCheckJobsInput = {
+  id?: string
+  username: string
+  name: string
+  bio?: string
+  avatarUrl?: string
+  location?: string
+  npmPackage?: string | null
+  status?: string
+  templateId?: string
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  commands?: Prisma.CommandUncheckedCreateNestedManyWithoutProfileInput
+  socialLinks?: Prisma.SocialLinkUncheckedCreateNestedManyWithoutProfileInput
+}
+
+export type ProfileCreateOrConnectWithoutPackageCheckJobsInput = {
+  where: Prisma.ProfileWhereUniqueInput
+  create: Prisma.XOR<Prisma.ProfileCreateWithoutPackageCheckJobsInput, Prisma.ProfileUncheckedCreateWithoutPackageCheckJobsInput>
+}
+
+export type ProfileUpsertWithoutPackageCheckJobsInput = {
+  update: Prisma.XOR<Prisma.ProfileUpdateWithoutPackageCheckJobsInput, Prisma.ProfileUncheckedUpdateWithoutPackageCheckJobsInput>
+  create: Prisma.XOR<Prisma.ProfileCreateWithoutPackageCheckJobsInput, Prisma.ProfileUncheckedCreateWithoutPackageCheckJobsInput>
+  where?: Prisma.ProfileWhereInput
+}
+
+export type ProfileUpdateToOneWithWhereWithoutPackageCheckJobsInput = {
+  where?: Prisma.ProfileWhereInput
+  data: Prisma.XOR<Prisma.ProfileUpdateWithoutPackageCheckJobsInput, Prisma.ProfileUncheckedUpdateWithoutPackageCheckJobsInput>
+}
+
+export type ProfileUpdateWithoutPackageCheckJobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  bio?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.StringFieldUpdateOperationsInput | string
+  npmPackage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  templateId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commands?: Prisma.CommandUpdateManyWithoutProfileNestedInput
+  socialLinks?: Prisma.SocialLinkUpdateManyWithoutProfileNestedInput
+}
+
+export type ProfileUncheckedUpdateWithoutPackageCheckJobsInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.StringFieldUpdateOperationsInput | string
+  bio?: Prisma.StringFieldUpdateOperationsInput | string
+  avatarUrl?: Prisma.StringFieldUpdateOperationsInput | string
+  location?: Prisma.StringFieldUpdateOperationsInput | string
+  npmPackage?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  status?: Prisma.StringFieldUpdateOperationsInput | string
+  templateId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  commands?: Prisma.CommandUncheckedUpdateManyWithoutProfileNestedInput
+  socialLinks?: Prisma.SocialLinkUncheckedUpdateManyWithoutProfileNestedInput
 }
 
 
@@ -655,11 +764,13 @@ export type ProfileUncheckedUpdateWithoutSocialLinksInput = {
 
 export type ProfileCountOutputType = {
   commands: number
+  packageCheckJobs: number
   socialLinks: number
 }
 
 export type ProfileCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   commands?: boolean | ProfileCountOutputTypeCountCommandsArgs
+  packageCheckJobs?: boolean | ProfileCountOutputTypeCountPackageCheckJobsArgs
   socialLinks?: boolean | ProfileCountOutputTypeCountSocialLinksArgs
 }
 
@@ -683,6 +794,13 @@ export type ProfileCountOutputTypeCountCommandsArgs<ExtArgs extends runtime.Type
 /**
  * ProfileCountOutputType without action
  */
+export type ProfileCountOutputTypeCountPackageCheckJobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.PackageCheckJobWhereInput
+}
+
+/**
+ * ProfileCountOutputType without action
+ */
 export type ProfileCountOutputTypeCountSocialLinksArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   where?: Prisma.SocialLinkWhereInput
 }
@@ -701,6 +819,7 @@ export type ProfileSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   createdAt?: boolean
   updatedAt?: boolean
   commands?: boolean | Prisma.Profile$commandsArgs<ExtArgs>
+  packageCheckJobs?: boolean | Prisma.Profile$packageCheckJobsArgs<ExtArgs>
   socialLinks?: boolean | Prisma.Profile$socialLinksArgs<ExtArgs>
   _count?: boolean | Prisma.ProfileCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["profile"]>
@@ -750,6 +869,7 @@ export type ProfileSelectScalar = {
 export type ProfileOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "name" | "bio" | "avatarUrl" | "location" | "npmPackage" | "status" | "templateId" | "createdAt" | "updatedAt", ExtArgs["result"]["profile"]>
 export type ProfileInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   commands?: boolean | Prisma.Profile$commandsArgs<ExtArgs>
+  packageCheckJobs?: boolean | Prisma.Profile$packageCheckJobsArgs<ExtArgs>
   socialLinks?: boolean | Prisma.Profile$socialLinksArgs<ExtArgs>
   _count?: boolean | Prisma.ProfileCountOutputTypeDefaultArgs<ExtArgs>
 }
@@ -760,6 +880,7 @@ export type $ProfilePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
   name: "Profile"
   objects: {
     commands: Prisma.$CommandPayload<ExtArgs>[]
+    packageCheckJobs: Prisma.$PackageCheckJobPayload<ExtArgs>[]
     socialLinks: Prisma.$SocialLinkPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
@@ -1169,6 +1290,7 @@ readonly fields: ProfileFieldRefs;
 export interface Prisma__ProfileClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   commands<T extends Prisma.Profile$commandsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$commandsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommandPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  packageCheckJobs<T extends Prisma.Profile$packageCheckJobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$packageCheckJobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$PackageCheckJobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   socialLinks<T extends Prisma.Profile$socialLinksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Profile$socialLinksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$SocialLinkPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1624,6 +1746,30 @@ export type Profile$commandsArgs<ExtArgs extends runtime.Types.Extensions.Intern
   take?: number
   skip?: number
   distinct?: Prisma.CommandScalarFieldEnum | Prisma.CommandScalarFieldEnum[]
+}
+
+/**
+ * Profile.packageCheckJobs
+ */
+export type Profile$packageCheckJobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the PackageCheckJob
+   */
+  select?: Prisma.PackageCheckJobSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the PackageCheckJob
+   */
+  omit?: Prisma.PackageCheckJobOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.PackageCheckJobInclude<ExtArgs> | null
+  where?: Prisma.PackageCheckJobWhereInput
+  orderBy?: Prisma.PackageCheckJobOrderByWithRelationInput | Prisma.PackageCheckJobOrderByWithRelationInput[]
+  cursor?: Prisma.PackageCheckJobWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.PackageCheckJobScalarFieldEnum | Prisma.PackageCheckJobScalarFieldEnum[]
 }
 
 /**

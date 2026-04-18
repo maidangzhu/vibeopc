@@ -11,7 +11,9 @@
 const { spawn } = require('child_process');
 const http = require('http');
 
-const TEST_USERNAME_BASE = 'testpublish';
+const TEST_RUN_ID = Date.now().toString(36);
+const TEST_USERNAME_BASE = `testpublish-${TEST_RUN_ID}`;
+const RUN_NPM_RUNTIME_VERIFICATION = process.env.RUN_NPM_RUNTIME_VERIFICATION === '1';
 const TEST_PACKAGES = [
   `${TEST_USERNAME_BASE}-1`,
   `${TEST_USERNAME_BASE}-2`,
@@ -217,16 +219,17 @@ describe('API: POST /api/profile — 保存 profile', () => {
     const profile = makeProfile(`${TEST_USERNAME_BASE}-1`, 1);
     const res = await httpRequest('POST', '/api/profile', profile);
     expect(res.status).toBe(200);
-    expect(res.body.success).toBe(true);
-    expect(res.body.profile.username).toBe(`${TEST_USERNAME_BASE}-1`);
-    expect(res.body.profile.commands).toHaveLength(4);
-    expect(res.body.profile.socialLinks).toHaveLength(2);
+    expect(res.body.code).toBe(0);
+    expect(res.body.data.profile.username).toBe(`${TEST_USERNAME_BASE}-1`);
+    expect(res.body.data.profile.commands).toHaveLength(4);
+    expect(res.body.data.profile.socialLinks).toHaveLength(2);
   });
 
   it('缺少必填字段返回 400', async () => {
     const res = await httpRequest('POST', '/api/profile', { username: 'onlyuser' });
     expect(res.status).toBe(400);
-    expect(res.body.error).toBeDefined();
+    expect(res.body.code).toBe(400);
+    expect(res.body.message).toBeDefined();
   });
 
   it('username 格式非法返回 400', async () => {
@@ -234,15 +237,16 @@ describe('API: POST /api/profile — 保存 profile', () => {
       username: 'UPPERCASE', name: 'Test',
     });
     expect(res.status).toBe(400);
-    expect(res.body.error).toContain('小写字母');
+    expect(res.body.message).toContain('小写字母');
   });
 
   it('重复保存同一用户更新已有数据', async () => {
     const profile = makeProfile(`${TEST_USERNAME_BASE}-1`, 1);
     profile.name = '更新后的名字';
+    profile.originalUsername = `${TEST_USERNAME_BASE}-1`;
     const res = await httpRequest('POST', '/api/profile', profile);
     expect(res.status).toBe(200);
-    expect(res.body.profile.name).toBe('更新后的名字');
+    expect(res.body.data.profile.name).toBe('更新后的名字');
   });
 });
 
@@ -250,10 +254,10 @@ describe('API: GET /api/profile/[username] — 读取 profile', () => {
   it('已存在的 profile 返回 200', async () => {
     const res = await httpRequest('GET', `/api/profile/${TEST_USERNAME_BASE}-1`);
     expect(res.status).toBe(200);
-    expect(res.body.profile.username).toBe(`${TEST_USERNAME_BASE}-1`);
-    expect(res.body.profile.name).toBe('更新后的名字');
-    expect(Array.isArray(res.body.profile.commands)).toBe(true);
-    expect(Array.isArray(res.body.profile.socialLinks)).toBe(true);
+    expect(res.body.data.profile.username).toBe(`${TEST_USERNAME_BASE}-1`);
+    expect(res.body.data.profile.name).toBe('更新后的名字');
+    expect(Array.isArray(res.body.data.profile.commands)).toBe(true);
+    expect(Array.isArray(res.body.data.profile.socialLinks)).toBe(true);
   });
 
   it('不存在的 profile 返回 404', async () => {
@@ -264,7 +268,7 @@ describe('API: GET /api/profile/[username] — 读取 profile', () => {
   it('命令包含 templateType 字段', async () => {
     const res = await httpRequest('GET', `/api/profile/${TEST_USERNAME_BASE}-1`);
     expect(res.status).toBe(200);
-    const cmd = res.body.profile.commands.find((c) => c.name === 'whoami');
+    const cmd = res.body.data.profile.commands.find((c) => c.name === 'whoami');
     expect(cmd.templateType).toBeDefined();
     expect(typeof cmd.templateType).toBe('string');
   });
@@ -273,43 +277,44 @@ describe('API: GET /api/profile/[username] — 读取 profile', () => {
 // ─── 流程串联测试 ────────────────────────────────────────────────────
 
 describe('流程: 保存 → 发布 → 验证 npx 命令', () => {
+  const runtimeIt = RUN_NPM_RUNTIME_VERIFICATION ? it : it.skip;
+
   for (let i = 2; i <= 4; i++) {
     const username = `${TEST_USERNAME_BASE}-${i}`;
     const profile = makeProfile(username, i);
+    let shouldSkipPublishChecks = false;
 
     describe(`包 #${i}: @vibeopc/${username}`, () => {
       it(`(a) 保存 profile`, async () => {
         const res = await httpRequest('POST', '/api/profile', profile);
         expect(res.status).toBe(200);
-        expect(res.body.profile.username).toBe(username);
+        expect(res.body.data.profile.username).toBe(username);
       });
 
       it(`(b) 读取已保存的 profile`, async () => {
         const res = await httpRequest('GET', `/api/profile/${username}`);
         expect(res.status).toBe(200);
-        expect(res.body.profile.name).toBe(`测试用户${i}`);
-        expect(res.body.profile.commands).toHaveLength(4);
-        expect(res.body.profile.templateId).toBe('personal');
+        expect(res.body.data.profile.name).toBe(`测试用户${i}`);
+        expect(res.body.data.profile.commands).toHaveLength(4);
+        expect(res.body.data.profile.templateId).toBe('personal');
       });
 
       it(`(c) 发布到 npm`, async () => {
         const res = await httpRequest('POST', '/api/publish', { username });
-        if (res.status === 500 && String(res.body.error).includes('token')) {
+        if (res.status === 500 && String(res.body.message).includes('token')) {
+          shouldSkipPublishChecks = true;
           console.warn(`⚠️  NPM_PUBLISH_TOKEN 未配置，跳过发布测试（包 ${username}）`);
           return;
         }
         expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.packageName).toBe(`@vibeopc/${username}`);
-        expect(res.body.version).toBeDefined();
-        expect(res.body.command).toContain(`npx @vibeopc/${username}`);
+        expect(res.body.code).toBe(0);
+        expect(res.body.data.packageName).toBe(`@vibeopc/${username}`);
+        expect(res.body.data.version).toBeDefined();
+        expect(res.body.data.command).toContain(`npx @vibeopc/${username}`);
       });
 
-      it(`(d) 等待 15 秒后验证 npx @vibeopc/${username} 可执行`, async () => {
-        const res = await httpRequest('POST', '/api/publish', { username });
-        if (res.status === 500 && String(res.body.error).includes('token')) {
-          return;
-        }
+      runtimeIt(`(d) 等待 15 秒后验证 npx @vibeopc/${username} 可执行`, async () => {
+        if (shouldSkipPublishChecks) return;
         console.log(`   [${username}] 等待 npm 包传播 (~15s)...`);
         await wait(18000);
         const npmRes = await execAsync('npx', [`@vibeopc/${username}`], 60000);
@@ -317,12 +322,8 @@ describe('流程: 保存 → 发布 → 验证 npx 命令', () => {
         expect(npmRes.stdout + npmRes.stderr).toContain(`测试用户${i}`);
       }, 60000);
 
-      it(`(e) 验证 npx @vibeopc/${username} whoami 命令`, async () => {
-        const res = await httpRequest('POST', '/api/publish', { username });
-        if (res.status === 500 && String(res.body.error).includes('token')) {
-          return;
-        }
-        await wait(15000);
+      runtimeIt(`(e) 验证 npx @vibeopc/${username} whoami 命令`, async () => {
+        if (shouldSkipPublishChecks) return;
         const cmdRes = await execAsync('npx', [`@vibeopc/${username}`, 'whoami'], 60000);
         expect(cmdRes.code).toBe(0);
         expect(cmdRes.stdout + cmdRes.stderr).toContain('姓名');
@@ -335,6 +336,7 @@ describe('API: 模板切换测试', () => {
   it('切换到 minimal 模板后保存，命令数量对应新模板', async () => {
     const minimalProfile = {
       username: `${TEST_USERNAME_BASE}-1`,
+      originalUsername: `${TEST_USERNAME_BASE}-1`,
       name: '模板切换测试',
       bio: '测试',
       location: '北京',
@@ -350,7 +352,7 @@ describe('API: 模板切换测试', () => {
 
     const getRes = await httpRequest('GET', `/api/profile/${TEST_USERNAME_BASE}-1`);
     expect(getRes.status).toBe(200);
-    expect(getRes.body.profile.commands).toHaveLength(2);
-    expect(getRes.body.profile.templateId).toBe('minimal');
+    expect(getRes.body.data.profile.commands).toHaveLength(2);
+    expect(getRes.body.data.profile.templateId).toBe('minimal');
   });
 });
