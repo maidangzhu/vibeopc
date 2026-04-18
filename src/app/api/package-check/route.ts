@@ -8,7 +8,7 @@ import {
 } from '@/lib/package-check';
 import { apiError, apiSuccess } from '@/lib/api-response';
 
-export const maxDuration = 660;
+export const maxDuration = 300;
 
 function isValidPackageName(value: string): boolean {
   return /^@[^/\s]+\/[^/\s]+$/.test(value);
